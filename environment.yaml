@@ -3,13 +3,6 @@ channels:
   - conda-forge
 dependencies:
   - python=3.11
-  - pandas
-  - numpy
-  - pyarrow
-  - matplotlib
-  - pillow
-  - ipykernel
   - pip
   - pip:
-      - nltk
-      - unidecode
+      - -e .[dev]
