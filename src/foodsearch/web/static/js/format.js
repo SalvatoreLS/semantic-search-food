@@ -56,21 +56,22 @@ export function isFoodQuery(d) {
   return kind !== "product";
 }
 
-export function tiles(metrics, systemId, referenceId = "r0") {
+export function tiles(metrics, systemId, baseId = "dense_pointwise") {
   const mine = metrics?.[systemId];
-  const ref = metrics?.[referenceId];
+  const base = metrics?.[baseId];
   if (!mine) return [];
   return QUERY_METRICS.map(([key, label, lowerIsBetter]) => {
     const value = mine[key];
     const tile = { label, value: value == null ? MISSING : value.toFixed(2) };
-    if (systemId === referenceId) return { ...tile, delta: "reference", cls: "fs-delta flat" };
-    if (value == null || ref?.[key] == null) return { ...tile, delta: "", cls: "fs-delta flat" };
-    const d = Math.round((value - ref[key]) * 100) / 100;
-    if (d === 0) return { ...tile, delta: "±0.00 vs R0", cls: "fs-delta flat" };
+    if (systemId === baseId || value == null || base?.[key] == null) {
+      return { ...tile, delta: "", cls: "fs-delta flat" };
+    }
+    const d = Math.round((value - base[key]) * 100) / 100;
+    if (d === 0) return { ...tile, delta: "±0.00 vs Pointwise", cls: "fs-delta flat" };
     const good = lowerIsBetter ? d < 0 : d > 0;
     return {
       ...tile,
-      delta: `${d > 0 ? "▲ +" : "▼ −"}${Math.abs(d).toFixed(2)} vs R0`,
+      delta: `${d > 0 ? "▲ +" : "▼ −"}${Math.abs(d).toFixed(2)} vs Pointwise`,
       cls: `fs-delta ${good ? "good" : "bad"}`,
     };
   });

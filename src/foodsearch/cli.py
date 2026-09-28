@@ -407,7 +407,7 @@ def build_parser() -> argparse.ArgumentParser:
     ev = sub.add_parser("eval", help="metrics, CIs and paired tests into reports/")
     ev.add_argument("--systems", nargs="+")
     ev.add_argument("--qrels", choices=["judge", "human"], default="judge")
-    ev.add_argument("--against", nargs="+", default=["bm25", "r0"])
+    ev.add_argument("--against", nargs="+", default=["bm25", "dense_pointwise"])
     ev.set_defaults(func=cmd_eval)
 
     serve = sub.add_parser("serve", help=f"demo UI and API on http://{SERVE_HOST}")

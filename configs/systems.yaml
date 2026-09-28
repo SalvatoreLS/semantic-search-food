@@ -85,9 +85,9 @@ hybrid:
     prior_lambda: 0.5
     rerank: {type: listwise, model: gpt-4.1-mini, depth: 30, top: 10}
 
-r0:
+dense_pointwise:
   type: pipeline
-  description: "R0: reference reimplementation, S2 + gpt-4.1-mini pointwise 0-10 rerank of the top 50"
+  description: "S9: S2 + gpt-4.1-mini pointwise 0-10 rerank of the top 50"
   params:
     dense: {backend: openai, model: text-embedding-3-large}
     rerank: {type: pointwise, model: gpt-4.1-mini, depth: 50}

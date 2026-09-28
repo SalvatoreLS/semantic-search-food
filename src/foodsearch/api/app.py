@@ -21,7 +21,7 @@ from foodsearch.llm import LLMClient
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "static"
 DEFAULT_SYSTEM = "main"
-REFERENCE_SYSTEM = "r0"
+COMPARE_SYSTEM = "dense_pointwise"
 API_PREFIXES = ("/api/", "/images/")
 
 
@@ -65,7 +65,7 @@ def create_app(
     @app.get("/api/compare", response_model=CompareResponse)
     def compare(
         q: str = Query(min_length=1),
-        left: str = REFERENCE_SYSTEM,
+        left: str = COMPARE_SYSTEM,
         right: str = DEFAULT_SYSTEM,
     ) -> CompareResponse:
         return demo.compare(q, left, right)

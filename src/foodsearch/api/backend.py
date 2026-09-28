@@ -48,7 +48,11 @@ logger = logging.getLogger("uvicorn.error")
 
 RESULTS_K = 10
 ANNOTATOR = "annotator1"
-DEMO_SYSTEMS = (("bm25", "BM25", "BM25"), ("r0", "Reference (R0)", "R0"), ("main", "Main", "Main"))
+DEMO_SYSTEMS = (
+    ("bm25", "BM25", "BM25"),
+    ("dense_pointwise", "Pointwise rerank (S9)", "Pointwise"),
+    ("main", "Main", "Main"),
+)
 QUERY_METRICS = ("ndcg5", "ndcg10", "p5", "food_leak5")
 
 T = TypeVar("T")
