@@ -1,20 +1,26 @@
 import argparse
 import json
 import sys
+import time
 from collections.abc import Sequence
+from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
 from foodsearch import paths
 from foodsearch.data import build_items, load_items, load_queries, save_items
+from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
 from foodsearch.eval.agreement import agreement, intra_agreement
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
 from foodsearch.eval.prompts import LANGS
-from foodsearch.llm import LLMClient
-from foodsearch.retrievers import Retriever
+from foodsearch.llm import LLMClient, default_client
+from foodsearch.pipeline import Pipeline, PipelineResult
+from foodsearch.retrievers import Hit, Retriever
 from foodsearch.runs import Run, hits_to_run, load_run, save_run
 from foodsearch.systems import build_system
 
@@ -38,11 +44,27 @@ def cmd_index(args: argparse.Namespace) -> None:
     print(f"{len(items)} items written to {paths.items_parquet()}")
 
 
+def _print_trace(result: PipelineResult) -> None:
+    if result.understanding is not None:
+        print(f"intent: {result.intent}; dishes: {', '.join(result.understanding.dishes_pt)}")
+    elif result.intent is not None:
+        print(f"intent: {result.intent}")
+    for stage in result.stages:
+        model = f" ({stage.model})" if stage.model else ""
+        cost = f"{stage.ms:.0f} ms, ${stage.cost_usd:.4f}"
+        print(f"  {stage.name}{model}: {stage.detail or ''} [{cost}]")
+
+
 def cmd_search(args: argparse.Namespace) -> None:
     items = _load_items()
     system = _fitted_system(args.system, args.config, items)
     names = items.set_index("item_id")[["name", "l0"]]
-    hits = system.search(args.query, k=args.k)
+    if isinstance(system, Pipeline):
+        result = system.search_detailed(args.query, k=args.k)
+        _print_trace(result)
+        hits = result.hits
+    else:
+        hits = system.search(args.query, k=args.k)
     if not hits:
         print("no results")
     for rank, hit in enumerate(hits, start=1):
@@ -50,15 +72,56 @@ def cmd_search(args: argparse.Namespace) -> None:
         print(f"{rank:>3}  {hit.score:8.4f}  {hit.item_id}  {name}  [{l0}]")
 
 
+def _timed_search(system: Retriever, query: str, k: int) -> tuple[list[Hit], dict[str, Any]]:
+    start = time.perf_counter()
+    if isinstance(system, Pipeline):
+        result = system.search_detailed(query, k=k)
+        hits, stages = result.hits, [asdict(s) for s in result.stages]
+    else:
+        hits, stages = system.search(query, k=k), []
+    ms = (time.perf_counter() - start) * 1000
+    return hits, {"ms": round(ms, 1), "stages": stages}
+
+
 def cmd_run(args: argparse.Namespace) -> None:
     items = _load_items()
     system = _fitted_system(args.system, args.config, items)
     queries = load_queries(paths.queries_csv())
-    hits = {q.query_id: system.search(q.text, k=args.k) for q in queries.itertuples(index=False)}
+    costs_before = len(default_client().costs.calls)
+    hits: dict[str, list[Hit]] = {}
+    per_query: dict[str, dict[str, Any]] = {}
+    for q in queries.itertuples(index=False):
+        hits[q.query_id], per_query[q.query_id] = _timed_search(system, q.text, args.k)
     out = paths.runs_dir() / f"{args.system}.json"
     save_run(hits_to_run(hits), out)
+    new_calls = default_client().costs.calls[costs_before:]
+    meta = {
+        "system": args.system,
+        "created": datetime.now(UTC).isoformat(timespec="seconds"),
+        "device": resolve_device(),
+        "paid_calls": len(new_calls),
+        "usd": sum(c.usd for c in new_calls),
+        "queries": per_query,
+    }
+    meta_path = paths.run_meta_dir() / f"{args.system}.json"
+    kept = _keep_cold_meta(meta_path, meta)
     empty = sum(not h for h in hits.values())
-    print(f"{len(hits)} queries ({empty} with no hits) written to {out}")
+    print(
+        f"{len(hits)} queries ({empty} with no hits) written to {out}; "
+        f"{meta['paid_calls']} paid calls, ${meta['usd']:.4f}"
+    )
+    if kept:
+        print(f"cached rerun: kept the cold-run timing in {meta_path}")
+
+
+def _keep_cold_meta(path: Path, meta: dict[str, Any]) -> bool:
+    if path.exists() and meta["paid_calls"] == 0:
+        previous = json.loads(path.read_text(encoding="utf-8"))
+        if previous.get("paid_calls", 0) > 0:
+            return True
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(meta, indent=1), encoding="utf-8")
+    return False
 
 
 def _require(path: Path, hint: str) -> Path:
