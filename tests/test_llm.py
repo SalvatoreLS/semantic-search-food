@@ -138,3 +138,17 @@ def test_cost_summary_groups_by_tag_and_model(tmp_path: Path) -> None:
     assert set(summary.index) == {"query", "emb"}
     assert summary.loc["emb", "input_tokens"] == 10
     assert cost_summary(tmp_path / "missing.jsonl").empty
+
+
+def test_validator_failure_is_not_cached(tmp_path: Path) -> None:
+    llm, fake = _client(tmp_path, FakeChat(['{"grade": 7}', '{"grade": 2}']))
+
+    def check(parsed: dict[str, Any]) -> None:
+        if parsed["grade"] not in range(4):
+            raise ValueError("grade out of range")
+
+    with pytest.raises(ValueError):
+        llm.chat_json("gpt-4.1", MESSAGES, tag="judge", validate=check)
+    assert len(llm.cache) == 0
+    assert llm.chat_json("gpt-4.1", MESSAGES, tag="judge", validate=check) == {"grade": 2}
+    assert len(fake.chat.completions.calls) == 2

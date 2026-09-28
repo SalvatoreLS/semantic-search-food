@@ -1,6 +1,7 @@
 import hashlib
 import json
-from collections.abc import Sequence
+import threading
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -72,6 +73,7 @@ class CostTracker:
     def __init__(self, log_path: Path) -> None:
         self.log_path = log_path
         self.calls: list[CallCost] = []
+        self._lock = threading.Lock()
 
     def record(
         self,
@@ -90,10 +92,11 @@ class CostTracker:
             output_tokens=output_tokens,
             usd=call_cost(model, input_tokens, cached_input_tokens, output_tokens),
         )
-        self.calls.append(cost)
-        self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        with self.log_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(asdict(cost)) + "\n")
+        with self._lock:
+            self.calls.append(cost)
+            self.log_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.log_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(asdict(cost)) + "\n")
         return cost
 
     @property
@@ -144,6 +147,7 @@ class LLMClient:
         tag: str,
         max_tokens: int | None = None,
         cache_extra: dict[str, Any] | None = None,
+        validate: Callable[[dict[str, Any]], object] | None = None,
     ) -> dict[str, Any]:
         price_of(model)
         params: dict[str, Any] = {"temperature": 0, "response_format": {"type": "json_object"}}
@@ -183,6 +187,8 @@ class LLMClient:
             raise LLMResponseError(f"{model} returned invalid JSON") from e
         if not isinstance(parsed, dict):
             raise LLMResponseError(f"{model} returned JSON that is not an object")
+        if validate is not None:
+            validate(parsed)
         self.cache.set(key, parsed)
         return parsed
 
