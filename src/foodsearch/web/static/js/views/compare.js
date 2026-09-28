@@ -1,5 +1,5 @@
 import { api } from "../api.js";
-import { esc, icon, imageSlot, noteHtml, wireImageFallbacks } from "../dom.js";
+import { esc, icon, imageSlot, noteHtml, wireImageFallbacks, wireSegs } from "../dom.js";
 import { MISSING, grade, isFoodQuery } from "../format.js";
 
 const state = { text: "", left: "r0", right: "main", data: null, note: "", loading: false };
@@ -115,6 +115,7 @@ export function render(ctx) {
   const root = ctx.root;
   root.innerHTML = `${header(ctx)}${state.note ? noteHtml(state.note) : ""}${body(ctx)}`;
   wireImageFallbacks(root);
+  wireSegs(root);
   const input = root.querySelector("#fs-cq");
   input.addEventListener("input", (e) => { state.text = e.target.value; });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") run(ctx, input.value); });

@@ -1,5 +1,5 @@
 import { api } from "../api.js";
-import { esc, icon, imageSlot, noteHtml, wireImageFallbacks } from "../dom.js";
+import { esc, icon, imageSlot, noteHtml, wireImageFallbacks, wireSegs } from "../dom.js";
 import { openDrawer } from "../drawer.js";
 import { cost, grade, isFoodQuery, ms, priceLine, priorText, sourcesShort, tiles } from "../format.js";
 
@@ -14,9 +14,11 @@ ${icon("search", 20)}
 <input id="fs-q" type="text" value="${esc(state.text)}" placeholder="Descreva o que você quer comer…" autocomplete="off">
 <button class="fs-enter" aria-label="Run query" data-run>${icon("enter", 18)}</button>
 </div>
+<div class="fs-sysfield">
+<span class="fs-eyebrow" aria-hidden="true">System</span>
 <div class="fs-seg" role="group" aria-label="System">
-<span class="fs-eyebrow" style="padding: 0 8px 0 12px">System</span>
 ${ctx.systems.map((s) => `<button aria-pressed="${s.id === state.system}" data-system="${esc(s.id)}">${esc(s.label)}</button>`).join("")}
+</div>
 </div>
 </div>
 <div class="fs-chiprow">
@@ -137,6 +139,7 @@ export function render(ctx) {
   const root = ctx.root;
   root.innerHTML = `${searchBar(ctx)}${state.note ? noteHtml(state.note) : ""}${body(ctx)}`;
   wireImageFallbacks(root);
+  wireSegs(root);
   const input = root.querySelector("#fs-q");
   input.addEventListener("input", (e) => { state.text = e.target.value; });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") run(ctx, input.value); });

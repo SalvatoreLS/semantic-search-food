@@ -40,6 +40,86 @@ export function wireImageFallbacks(root) {
   });
 }
 
+const segThumbs = new Map();
+
+function addThumb(container) {
+  const thumb = document.createElement("span");
+  thumb.className = "fs-seg-thumb";
+  thumb.setAttribute("aria-hidden", "true");
+  container.prepend(thumb);
+  return thumb;
+}
+
+function moveThumb(thumb, target) {
+  thumb.style.transform = `translateX(${target.offsetLeft}px)`;
+  thumb.style.width = `${target.offsetWidth}px`;
+}
+
+function jumpThumb(thumb, target) {
+  thumb.classList.remove("anim");
+  moveThumb(thumb, target);
+  thumb.getBoundingClientRect();
+  thumb.classList.add("anim");
+}
+
+function followResize(container, thumb, selected) {
+  let width = container.offsetWidth;
+  new ResizeObserver(() => {
+    const target = selected();
+    if (!target || !container.isConnected || container.offsetWidth === width) return;
+    width = container.offsetWidth;
+    jumpThumb(thumb, target);
+  }).observe(container);
+}
+
+export function wireSegs(root) {
+  root.querySelectorAll(".fs-seg").forEach((seg) => {
+    const key = seg.getAttribute("aria-label");
+    const thumb = addThumb(seg);
+    const place = (btn) => {
+      moveThumb(thumb, btn);
+      segThumbs.set(key, { x: btn.offsetLeft, w: btn.offsetWidth });
+    };
+    const pressed = () => seg.querySelector('button[aria-pressed="true"]');
+    const prev = segThumbs.get(key);
+    const target = pressed();
+    if (!target) return;
+    if (prev) {
+      thumb.style.transform = `translateX(${prev.x}px)`;
+      thumb.style.width = `${prev.w}px`;
+      thumb.getBoundingClientRect();
+      thumb.classList.add("anim");
+      place(target);
+    } else {
+      jumpThumb(thumb, target);
+      place(target);
+    }
+    followResize(seg, thumb, pressed);
+    seg.querySelectorAll("button").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        if (!seg.isConnected) return;
+        seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+        moveThumb(thumb, btn);
+        setTimeout(() => { if (seg.isConnected) place(btn); });
+      }),
+    );
+  });
+}
+
+export function syncNavThumb(nav) {
+  const current = () => nav.querySelector('[aria-current="page"]');
+  const target = current();
+  if (!target) return;
+  const thumb = nav.querySelector(".fs-seg-thumb");
+  if (thumb) {
+    moveThumb(thumb, target);
+    return;
+  }
+  const created = addThumb(nav);
+  jumpThumb(created, target);
+  followResize(nav, created, current);
+}
+
 export function noteHtml(text) {
   return `<p class="fs-note" role="status">${icon("info", 14)}${esc(text)}</p>`;
 }

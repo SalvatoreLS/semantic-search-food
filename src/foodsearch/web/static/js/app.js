@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { esc } from "./dom.js";
+import { esc, syncNavThumb } from "./dom.js";
 import { closeDrawer } from "./drawer.js";
 import * as about from "./views/about.js";
 import * as compare from "./views/compare.js";
@@ -49,6 +49,7 @@ function route() {
     if (a.dataset.view === name) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   });
+  syncNavThumb(document.querySelector(".fs-nav"));
   VIEWS[name].render({ ...ctx, root: document.getElementById(`view-${name}`) });
 }
 
