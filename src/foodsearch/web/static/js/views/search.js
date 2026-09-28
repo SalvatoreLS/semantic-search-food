@@ -45,7 +45,7 @@ function understandingPanel(d) {
 <dl class="fs-dl">
 <div class="fs-dl-row"><dt>Intent</dt><dd><span class="fs-chip intent">${esc(d.intent)}</span></dd></div>
 <div class="fs-dl-row"><dt>Expanded dishes</dt><dd class="fs-chips">
-${dishes.length ? dishes.map((t) => `<span class="fs-chip muted">${esc(t)}</span>`).join("") : '<span class="fs-meta">None: expansion only runs for dish and occasion intents.</span>'}
+${dishes.length ? dishes.map((t) => `<span class="fs-chip muted">${esc(t)}</span>`).join("") : '<span class="fs-meta">None: this system sets the intent with a keyword rule and has no LLM expansion.</span>'}
 </dd></div>
 <div class="fs-dl-row"><dt>Food prior</dt><dd style="display: flex; flex-direction: column; gap: 4px"><span class="fs-prior"><span class="${prior.dot}"></span>${esc(prior.text)}</span><span class="fs-meta fs-mono">${esc(d.food_prior?.reason || "")}</span></dd></div>
 </dl>
