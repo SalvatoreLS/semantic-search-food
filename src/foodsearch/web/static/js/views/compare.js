@@ -111,6 +111,14 @@ async function run(ctx, text) {
   render(ctx);
 }
 
+export function open(ctx, params) {
+  for (const side of ["left", "right"]) {
+    const system = params.get(side);
+    if (ctx.systems.some((s) => s.id === system)) state[side] = system;
+  }
+  run(ctx, params.get("q"));
+}
+
 export function render(ctx) {
   const root = ctx.root;
   root.innerHTML = `${header(ctx)}${state.note ? noteHtml(state.note) : ""}${body(ctx)}`;

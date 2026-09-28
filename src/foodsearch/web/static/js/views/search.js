@@ -135,6 +135,12 @@ async function run(ctx, text) {
   render(ctx);
 }
 
+export function open(ctx, params) {
+  const system = params.get("system");
+  if (ctx.systems.some((s) => s.id === system)) state.system = system;
+  run(ctx, params.get("q"));
+}
+
 export function render(ctx) {
   const root = ctx.root;
   root.innerHTML = `${searchBar(ctx)}${state.note ? noteHtml(state.note) : ""}${body(ctx)}`;
