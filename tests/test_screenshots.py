@@ -1,3 +1,4 @@
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -46,3 +47,23 @@ def test_find_chrome_exits_when_none_found(
 
     with pytest.raises(SystemExit, match="pass --chrome"):
         shots.find_chrome()
+
+
+def test_shoot_reports_chrome_failure(
+    shots: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    failed = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="boom")
+    monkeypatch.setattr(shots.subprocess, "run", lambda *a, **k: failed)
+
+    with pytest.raises(SystemExit, match="boom"):
+        shots.shoot("chrome", "http://x/#about", tmp_path / "a.png", (10, 10), 1, tmp_path)
+
+
+def test_shoot_requires_the_png(
+    shots: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    ok = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+    monkeypatch.setattr(shots.subprocess, "run", lambda *a, **k: ok)
+
+    with pytest.raises(SystemExit, match="Chrome failed"):
+        shots.shoot("chrome", "http://x/#about", tmp_path / "a.png", (10, 10), 1, tmp_path)

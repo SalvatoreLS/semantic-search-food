@@ -14,7 +14,13 @@ from urllib.parse import urlencode
 from foodsearch import paths
 
 DEFAULT_QUERY = "Comida para piquenique no parque"
-CHROME_NAMES = ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser")
+CHROME_NAMES = (
+    "google-chrome",
+    "google-chrome-stable",
+    "chromium",
+    "chromium-browser",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+)
 SERVER_TIMEOUT_S = 120.0
 SERVE_CODE = "from foodsearch.cli import main; main()"
 HEADLINE = "hybrid"
@@ -77,7 +83,7 @@ def wait_ready(
 def shoot(
     chrome: str, url: str, out: Path, size: tuple[int, int], budget_ms: int, profile: Path
 ) -> None:
-    subprocess.run(
+    done = subprocess.run(
         [
             chrome,
             "--headless=new",
@@ -90,9 +96,11 @@ def shoot(
             f"--screenshot={out}",
             url,
         ],
-        check=True,
         capture_output=True,
+        text=True,
     )
+    if done.returncode != 0 or not out.is_file():
+        raise SystemExit(f"Chrome failed on {url}:\n{done.stderr.strip()}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -119,7 +127,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                     print(f"{view}: {target}")
         finally:
             server.terminate()
-            server.wait(timeout=10)
+            try:
+                server.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                server.kill()
+                server.wait()
     return 0
 
 
