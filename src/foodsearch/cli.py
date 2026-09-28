@@ -21,14 +21,15 @@ from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
 from foodsearch.eval.ablation import ablations
 from foodsearch.eval.agreement import agreement, intra_agreement
+from foodsearch.eval.cost import cost_table
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
 from foodsearch.eval.prompts import LANGS
-from foodsearch.llm import LLMClient, default_client
+from foodsearch.llm import LLMClient, default_client, load_cost_log
 from foodsearch.pipeline import Pipeline, PipelineResult
 from foodsearch.retrievers import Hit, Retriever
 from foodsearch.runs import Run, hits_to_run, load_run, save_run
-from foodsearch.systems import build_system
+from foodsearch.systems import build_system, load_systems
 
 SERVE_HOST = "127.0.0.1"
 
@@ -325,6 +326,15 @@ def cmd_report(args: argparse.Namespace) -> None:
     view = steps[steps["metric"] == "ndcg5"].set_index("label")
     print(view[["diff", "lo", "hi", "p_holm", "significant"]].round(3).to_string())
     print(f"ablations written to {out / f'ablations{suffix}.csv'}")
+    metas = {
+        f.stem: json.loads(f.read_text(encoding="utf-8"))
+        for f in sorted(paths.run_meta_dir().glob("*.json"))
+    }
+    if metas:
+        costs = cost_table(metas, load_systems(args.config), load_cost_log(paths.cost_log()))
+        costs.to_csv(out / "cost.csv", index=False)
+        print(costs.set_index("system").round(4).to_string())
+        print(f"cost and latency written to {out / 'cost.csv'}")
 
 
 def port_is_free(port: int, host: str = SERVE_HOST) -> bool:
@@ -425,8 +435,9 @@ def build_parser() -> argparse.ArgumentParser:
     ev.add_argument("--against", nargs="+", default=["bm25", "dense_pointwise"])
     ev.set_defaults(func=cmd_eval)
 
-    report = sub.add_parser("report", help="step-wise ablation table from reports/per_query")
+    report = sub.add_parser("report", help="ablation and cost/latency tables into reports/")
     report.add_argument("--qrels", choices=["judge", "human"], default="judge")
+    report.add_argument("--config", type=Path, default=paths.configs_dir() / "systems.yaml")
     report.set_defaults(func=cmd_report)
 
     serve = sub.add_parser("serve", help=f"demo UI and API on http://{SERVE_HOST}")
