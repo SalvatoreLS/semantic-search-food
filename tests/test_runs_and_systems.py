@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from foodsearch.retrievers import BM25Retriever, Hit
-from foodsearch.runs import hits_to_run, load_run, save_run
+from foodsearch.runs import hits_to_run, load_run, save_run, top_k_table
 from foodsearch.systems import build_system, load_systems
 
 REPO_CONFIG = Path(__file__).resolve().parents[1] / "configs" / "systems.yaml"
@@ -34,3 +34,14 @@ def test_unknown_system_or_type(tmp_path: Path) -> None:
     config.write_text("x:\n  type: magic\n")
     with pytest.raises(ValueError, match="unknown type"):
         load_systems(config)
+
+
+def test_top_k_table_ranks_by_score_then_item_id() -> None:
+    run = {"q2": {"b": 1.0, "a": 1.0, "c": 3.0}, "q1": {"x": 0.5}}
+    table = top_k_table(run, "sys", k=2)
+    assert list(table.columns) == ["query_id", "rank", "itemId", "score", "system"]
+    assert table[["query_id", "rank", "itemId"]].values.tolist() == [
+        ["q1", 1, "x"],
+        ["q2", 1, "c"],
+        ["q2", 2, "a"],
+    ]

@@ -30,7 +30,7 @@ from foodsearch.eval.prompts import LANGS
 from foodsearch.llm import LLMClient, default_client, load_cost_log
 from foodsearch.pipeline import Pipeline, PipelineResult
 from foodsearch.retrievers import Hit, Retriever
-from foodsearch.runs import Run, hits_to_run, load_run, save_run
+from foodsearch.runs import Run, hits_to_run, load_run, save_run, top_k_table
 from foodsearch.systems import build_system, load_systems
 
 SERVE_HOST = "127.0.0.1"
@@ -382,6 +382,15 @@ def _write_plots(costs: pd.DataFrame, out: Path, headline: str) -> None:
     print(f"plots written to {plots}")
 
 
+def cmd_export(args: argparse.Namespace) -> None:
+    run = load_run(_require(paths.runs_dir() / f"{args.system}.json", "run the system first"))
+    table = top_k_table(run, args.system, args.k)
+    out = paths.results_dir() / "final_top10.csv"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    table.to_csv(out, index=False)
+    print(f"{len(table)} rows ({table['query_id'].nunique()} queries) of {args.system} -> {out}")
+
+
 def port_is_free(port: int, host: str = SERVE_HOST) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         if os.name == "posix":
@@ -485,6 +494,11 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--config", type=Path, default=paths.configs_dir() / "systems.yaml")
     report.add_argument("--headline", default=HEADLINE_SYSTEM)
     report.set_defaults(func=cmd_report)
+
+    export = sub.add_parser("export", help="top-k of a system into results/final_top10.csv")
+    export.add_argument("--system", default=HEADLINE_SYSTEM)
+    export.add_argument("-k", type=int, default=10)
+    export.set_defaults(func=cmd_export)
 
     serve = sub.add_parser("serve", help=f"demo UI and API on http://{SERVE_HOST}")
     serve.add_argument("--port", type=int, default=8000)

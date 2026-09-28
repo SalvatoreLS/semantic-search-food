@@ -72,6 +72,10 @@ def eval_freeze_json() -> Path:
     return artifacts_dir() / "eval_freeze.json"
 
 
+def results_dir() -> Path:
+    return project_root() / "results"
+
+
 def reports_dir() -> Path:
     return project_root() / "reports"
 
