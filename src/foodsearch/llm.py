@@ -1,19 +1,26 @@
 import hashlib
 import json
 import threading
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from functools import cache
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 import diskcache
 import numpy as np
+import openai
 import pandas as pd
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from foodsearch import paths
+
 EMBED_BATCH = 256
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,3 +226,40 @@ class LLMClient:
             for text, item in zip(batch, data, strict=True):
                 self.cache.set(key_of(text), np.asarray(item.embedding, dtype=np.float32))
         return np.stack([self.cache[key_of(t)] for t in texts])
+
+    def chat_checked(
+        self,
+        model: str,
+        messages: Sequence[dict[str, str]],
+        parse: Callable[[dict[str, Any]], T],
+        *,
+        tag: str,
+        attempts: int = 3,
+        max_tokens: int | None = None,
+        cache_extra: dict[str, Any] | None = None,
+    ) -> T:
+        error: Exception | None = None
+        for attempt in range(attempts):
+            if attempt:
+                time.sleep(min(2.0**attempt, 30.0))
+            try:
+                parsed = self.chat_json(
+                    model,
+                    messages,
+                    tag=tag,
+                    max_tokens=max_tokens,
+                    cache_extra=cache_extra,
+                    validate=parse,
+                )
+                return parse(parsed)
+            except (LLMResponseError, ValueError, openai.APIError) as e:
+                error = e
+        raise LLMResponseError(f"{model} failed after {attempts} attempts: {error}") from error
+
+    def cost_since(self, n_calls: int) -> float:
+        return sum(c.usd for c in self.costs.calls[n_calls:])
+
+
+@cache
+def default_client() -> LLMClient:
+    return LLMClient(paths.cache_dir(), paths.cost_log())
