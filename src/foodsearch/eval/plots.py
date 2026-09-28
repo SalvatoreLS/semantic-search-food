@@ -1,4 +1,5 @@
 from collections.abc import Mapping, Sequence
+from itertools import pairwise
 from pathlib import Path
 
 import pandas as pd
@@ -45,7 +46,7 @@ def frontier(cost: Sequence[float], quality: Sequence[float], tie: float = 0.01)
 def spread(values: Sequence[float], gap: float) -> list[float]:
     order = sorted(range(len(values)), key=lambda i: values[i])
     placed = list(values)
-    for prev, cur in zip(order, order[1:], strict=False):
+    for prev, cur in pairwise(order):
         placed[cur] = max(placed[cur], placed[prev] + gap)
     return placed
 
