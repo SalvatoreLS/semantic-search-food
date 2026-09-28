@@ -1,0 +1,93 @@
+bm25:
+  type: bm25
+  description: "S0: BM25 on V2 doc text, PT-stemmed and accent-folded"
+  params:
+    k1: 1.5
+    b: 0.75
+
+dense_oai_small:
+  type: dense
+  description: "S1: dense text-embedding-3-small (1536d) on V2 doc text"
+  params:
+    backend: openai
+    model: text-embedding-3-small
+
+dense_oai_large:
+  type: dense
+  description: "S2: dense text-embedding-3-large (3072d) on V2 doc text"
+  params:
+    backend: openai
+    model: text-embedding-3-large
+
+dense_e5_base:
+  type: dense
+  description: "S3a: dense multilingual-e5-base, local"
+  params:
+    backend: st
+    model: intfloat/multilingual-e5-base
+    query_prefix: "query: "
+    passage_prefix: "passage: "
+
+dense_bge_m3:
+  type: dense
+  description: "S3b: dense bge-m3, local"
+  params:
+    backend: st
+    model: BAAI/bge-m3
+    batch_size: 16
+
+dense_prior:
+  type: pipeline
+  description: "S4: S2 + rule intent + food prior (lambda 0.5)"
+  params:
+    dense: {backend: openai, model: text-embedding-3-large}
+    understanding: rule
+    prior_lambda: 0.5
+
+qu_fusion:
+  type: pipeline
+  description: "S5: S2 on raw + LLM-expanded query, RRF, LLM intent + food prior"
+  params:
+    dense: {backend: openai, model: text-embedding-3-large}
+    understanding: llm
+    expand: true
+    prior_lambda: 0.5
+
+qu_fusion_ce:
+  type: pipeline
+  description: "S6: S5 + bge-reranker-v2-m3 cross-encoder on the top 30"
+  params:
+    dense: {backend: openai, model: text-embedding-3-large}
+    understanding: llm
+    expand: true
+    prior_lambda: 0.5
+    rerank: {type: cross_encoder, model: BAAI/bge-reranker-v2-m3, depth: 30}
+
+main:
+  type: pipeline
+  description: "S7 (main): S5 + gpt-4.1-mini listwise rerank of the top 30"
+  params:
+    dense: {backend: openai, model: text-embedding-3-large}
+    understanding: llm
+    expand: true
+    prior_lambda: 0.5
+    rerank: {type: listwise, model: gpt-4.1-mini, depth: 30, top: 10}
+
+hybrid:
+  type: pipeline
+  description: "S8: S7 + BM25 on the expanded query, weighted RRF (dense 1.0, bm25 0.5)"
+  params:
+    dense: {backend: openai, model: text-embedding-3-large}
+    bm25: {k1: 1.5, b: 0.75}
+    weights: {dense raw: 1.0, dense expanded: 1.0, bm25: 0.5}
+    understanding: llm
+    expand: true
+    prior_lambda: 0.5
+    rerank: {type: listwise, model: gpt-4.1-mini, depth: 30, top: 10}
+
+r0:
+  type: pipeline
+  description: "R0: reference reimplementation, S2 + gpt-4.1-mini pointwise 0-10 rerank of the top 50"
+  params:
+    dense: {backend: openai, model: text-embedding-3-large}
+    rerank: {type: pointwise, model: gpt-4.1-mini, depth: 50}

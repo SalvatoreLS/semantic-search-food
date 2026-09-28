@@ -1,0 +1,19 @@
+html, body { margin: 0; background: #FFFFFF; }
+body:has(.fs[data-theme="dark"]) { background: #0B0F1A; }
+.fs { min-height: 100vh; overflow: visible; }
+.fs-scrim, .fs-drawer { position: fixed; z-index: 10; }
+.fs-scrim { z-index: 9; }
+.fs-view[hidden] { display: none; }
+.fs-img img, .fs-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.fs-thumb { position: relative; }
+.fs-card.dim .fs-img img, .fs-li.dim .fs-thumb img { filter: saturate(0.3); }
+.fs-loading { margin-top: 32px; font-size: 13px; color: var(--text-muted); }
+.fs-error { color: var(--bad); }
+@media (max-width: 1100px) {
+  .fs-top { padding: 0 24px; }
+  .fs-page { padding: 24px 24px 40px; }
+  .fs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+#view-about:not([hidden]) { display: flex; flex-direction: column; gap: 32px; }
+a.fs-ghostbtn { text-decoration: none; }
+.fs-item.text-only { grid-template-columns: minmax(0, 1fr); }
