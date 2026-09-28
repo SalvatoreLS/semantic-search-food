@@ -22,6 +22,7 @@ from foodsearch.eval import human, judge, metrics
 from foodsearch.eval.ablation import ablations, rerank_gain, restrict
 from foodsearch.eval.agreement import agreement, intra_agreement
 from foodsearch.eval.cost import cost_table
+from foodsearch.eval.failures import failure_table
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
 from foodsearch.eval.plots import delta_plot, grade_mix, grade_mix_plot, pareto_plot
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
@@ -356,6 +357,17 @@ def cmd_report(args: argparse.Namespace) -> None:
         print(f"cost and latency written to {out / 'cost.csv'}")
         if args.qrels == "judge" and paths.qrels_json().exists():
             _write_plots(costs, out, args.headline)
+            _write_failures(out, args.headline)
+
+
+def _write_failures(out: Path, headline: str) -> None:
+    table = pd.read_csv(out / "per_query.csv", dtype={"system": str, "query_id": str})
+    _, _, tags = _metric_inputs()
+    qrels = judge.load_qrels(paths.qrels_json())
+    worst = failure_table(table, qrels, _load_runs(None), tags, headline)
+    worst.to_csv(out / "failures.csv", index=False)
+    print(worst.round(3).to_string(index=False))
+    print(f"worst {len(worst)} queries of {headline} written to {out / 'failures.csv'}")
 
 
 def _write_plots(costs: pd.DataFrame, out: Path, headline: str) -> None:
