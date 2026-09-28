@@ -20,7 +20,7 @@ from foodsearch.images import media_type
 from foodsearch.llm import LLMClient
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "static"
-DEFAULT_SYSTEM = "main"
+DEFAULT_SYSTEM = "hybrid"
 COMPARE_SYSTEM = "dense_pointwise"
 API_PREFIXES = ("/api/", "/images/")
 

@@ -65,12 +65,12 @@ ${stat("Human labels", `${s.label?.done ?? 0} / ${s.label?.total ?? 0}`, "blind,
 </aside>
 </div>
 <section class="fs-panel" aria-label="Architecture" style="display: flex; flex-direction: column; gap: 16px">
-<div class="fs-row"><h2>Architecture · Main</h2><span class="fs-legend" style="margin: 0"><span><span class="fs-node llm" style="margin: 0"></span>LLM call</span><span><span class="fs-node" style="margin: 0"></span>no LLM</span></span></div>
+<div class="fs-row"><h2>Architecture · Hybrid (headline)</h2><span class="fs-legend" style="margin: 0"><span><span class="fs-node llm" style="margin: 0"></span>LLM call</span><span><span class="fs-node" style="margin: 0"></span>no LLM</span></span></div>
 <div class="fs-arch">${chain([
     box("Query (PT)", "free text or eval query"),
     box("Query understanding", "intent + dish expansion · gpt-4.1-mini", true),
-    box("Dense retrieval", "raw + expanded query"),
-    box("Weighted RRF", "fuses both lists"),
+    box("Retrieval", "dense raw + expanded, BM25 on expanded"),
+    box("Weighted RRF", "dense 1 + 1, BM25 0.5"),
     box("Food prior", "non-food × λ, off for product intent"),
     box("Listwise rerank", "top 30 · gpt-4.1-mini", true),
     box("Top 10", "to UI"),

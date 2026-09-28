@@ -50,8 +50,9 @@ RESULTS_K = 10
 ANNOTATOR = "annotator1"
 DEMO_SYSTEMS = (
     ("bm25", "BM25", "BM25"),
-    ("dense_pointwise", "Pointwise rerank (S9)", "Pointwise"),
-    ("main", "Main", "Main"),
+    ("dense_pointwise", "Pointwise (S9)", "Pointwise"),
+    ("main", "Listwise (S7)", "Listwise"),
+    ("hybrid", "Hybrid (S8)", "Hybrid"),
 )
 QUERY_METRICS = ("ndcg5", "ndcg10", "p5", "food_leak5")
 

@@ -2,7 +2,7 @@ import { api } from "../api.js";
 import { esc, icon, imageSlot, noteHtml, wireImageFallbacks, wireSegs } from "../dom.js";
 import { MISSING, grade, isFoodQuery } from "../format.js";
 
-const state = { text: "", left: "dense_pointwise", right: "main", data: null, note: "", loading: false };
+const state = { text: "", left: "dense_pointwise", right: "hybrid", data: null, note: "", loading: false };
 const STRIP = [["ndcg5", "nDCG@5", false], ["p5", "P@5", false], ["food_leak5", "food-leak@5", true]];
 
 function header(ctx) {

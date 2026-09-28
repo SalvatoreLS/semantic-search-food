@@ -119,8 +119,8 @@ def test_queries_lists_eval_queries_and_demo_systems(make_client: Any) -> None:
     assert [s["id"] for s in body["systems"]] == ["bm25", "main"]
     assert body["systems"][1] == {
         "id": "main",
-        "label": "Main",
-        "short": "Main",
+        "label": "Listwise (S7)",
+        "short": "Listwise",
         "desc": "Main pipeline",
     }
     assert body["judge_model"] == "gpt-4.1"

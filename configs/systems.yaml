@@ -65,7 +65,7 @@ qu_fusion_ce:
 
 main:
   type: pipeline
-  description: "S7 (main): S5 + gpt-4.1-mini listwise rerank of the top 30"
+  description: "S7: S5 + gpt-4.1-mini listwise rerank of the top 30"
   params:
     dense: {backend: openai, model: text-embedding-3-large}
     understanding: llm
@@ -75,7 +75,7 @@ main:
 
 hybrid:
   type: pipeline
-  description: "S8: S7 + BM25 on the expanded query, weighted RRF (dense 1.0, bm25 0.5)"
+  description: "S8 (headline): S7 + BM25 on the expanded query, weighted RRF (dense 1.0, bm25 0.5)"
   params:
     dense: {backend: openai, model: text-embedding-3-large}
     bm25: {k1: 1.5, b: 0.75}

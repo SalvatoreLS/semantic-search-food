@@ -3,7 +3,7 @@ import { esc, icon, imageSlot, noteHtml, wireImageFallbacks, wireSegs } from "..
 import { openDrawer } from "../drawer.js";
 import { cost, grade, isFoodQuery, ms, priceLine, priorText, sourcesShort, tiles } from "../format.js";
 
-const state = { text: "", system: "main", traceOpen: false, data: null, note: "", loading: false };
+const state = { text: "", system: "hybrid", traceOpen: false, data: null, note: "", loading: false };
 
 function searchBar(ctx) {
   return `
