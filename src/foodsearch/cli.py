@@ -1,5 +1,7 @@
 import argparse
 import json
+import os
+import socket
 import sys
 import time
 from collections.abc import Sequence
@@ -310,13 +312,50 @@ def cmd_eval(args: argparse.Namespace) -> None:
     print(f"reports written to {out}: {', '.join(outputs)}")
 
 
+def port_is_free(port: int, host: str = SERVE_HOST) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        if os.name == "posix":
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((host, port))
+        except OSError:
+            return False
+    return True
+
+
+def next_free_port(port: int, attempts: int = 50) -> int | None:
+    candidates = range(port + 1, min(port + 1 + attempts, 65536))
+    return next((p for p in candidates if port_is_free(p)), None)
+
+
+def confirm(question: str) -> bool:
+    try:
+        answer = input(f"{question} [Y/n] ").strip().lower()
+    except EOFError:
+        return False
+    return answer in ("", "y", "yes")
+
+
+def resolve_serve_port(port: int) -> int:
+    if port_is_free(port):
+        return port
+    alternative = next_free_port(port)
+    if alternative is None:
+        sys.exit(f"port {port} is in use and no free port was found nearby; pass --port")
+    question = f"port {port} is in use. Serve on {alternative} instead?"
+    if not sys.stdin.isatty() or not confirm(question):
+        sys.exit(f"port {port} is in use; pass --port")
+    return alternative
+
+
 def cmd_serve(args: argparse.Namespace) -> None:
     try:
         app = create_app(config=args.config)
     except DemoError as e:
         sys.exit(str(e))
-    print(f"FoodSearch demo on http://{SERVE_HOST}:{args.port}")
-    uvicorn.run(app, host=SERVE_HOST, port=args.port)
+    port = resolve_serve_port(args.port)
+    print(f"FoodSearch demo on http://{SERVE_HOST}:{port}")
+    uvicorn.run(app, host=SERVE_HOST, port=port)
 
 
 def build_parser() -> argparse.ArgumentParser:
