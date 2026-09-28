@@ -63,8 +63,10 @@ def test_summaries_and_comparisons() -> None:
 
 
 def test_comparison_pairs_have_no_reversed_duplicates() -> None:
-    pairs = comparison_pairs(["bm25", "r0", "main"], ["bm25", "r0", "missing"])
-    assert pairs == [("r0", "bm25"), ("main", "bm25"), ("main", "r0")]
+    pairs = comparison_pairs(
+        ["bm25", "dense_pointwise", "main"], ["bm25", "dense_pointwise", "missing"]
+    )
+    assert pairs == [("dense_pointwise", "bm25"), ("main", "bm25"), ("main", "dense_pointwise")]
 
 
 def test_per_query_rows_align_with_unsorted_qrels() -> None:

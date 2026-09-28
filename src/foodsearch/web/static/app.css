@@ -1,5 +1,11 @@
 html, body { margin: 0; background: #FFFFFF; }
 body:has(.fs[data-theme="dark"]) { background: #0B0F1A; }
+.fs { --brand: var(--accent); }
+.fs[data-theme="dark"] { --brand: #F2F4F8; }
+.fs-prosus { display: flex; align-items: center; gap: 8px; }
+.fs-prosus-mark, .fs-prosus-text { display: block; background: var(--brand); -webkit-mask: no-repeat center / contain; mask: no-repeat center / contain; }
+.fs-prosus-mark { width: 22px; height: 24px; -webkit-mask-image: url("img/prosus_logo.svg"); mask-image: url("img/prosus_logo.svg"); }
+.fs-prosus-text { width: 63px; height: 16px; -webkit-mask-image: url("img/prosus_text.svg"); mask-image: url("img/prosus_text.svg"); }
 .fs { min-height: 100vh; overflow: visible; }
 .fs-scrim, .fs-drawer { position: fixed; z-index: 10; }
 .fs-scrim { z-index: 9; }
@@ -17,3 +23,6 @@ body:has(.fs[data-theme="dark"]) { background: #0B0F1A; }
 #view-about:not([hidden]) { display: flex; flex-direction: column; gap: 32px; }
 a.fs-ghostbtn { text-decoration: none; }
 .fs-item.text-only { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 900px) {
+  .fs-tag { display: none; }
+}

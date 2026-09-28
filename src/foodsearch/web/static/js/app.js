@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { esc } from "./dom.js";
+import { esc, syncNavThumb } from "./dom.js";
 import { closeDrawer } from "./drawer.js";
 import * as about from "./views/about.js";
 import * as compare from "./views/compare.js";
@@ -36,20 +36,28 @@ function applyTheme(theme) {
   }
 }
 
+function parseHash() {
+  const [name, query = ""] = location.hash.replace("#", "").split("?");
+  return { name: name in VIEWS ? name : "search", params: new URLSearchParams(query) };
+}
+
 function currentView() {
-  const name = location.hash.replace("#", "");
-  return name in VIEWS ? name : "search";
+  return parseHash().name;
 }
 
 function route() {
   closeDrawer();
-  const name = currentView();
+  const { name, params } = parseHash();
   document.querySelectorAll(".fs-view").forEach((el) => { el.hidden = el.dataset.view !== name; });
   document.querySelectorAll(".fs-nav a").forEach((a) => {
     if (a.dataset.view === name) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   });
-  VIEWS[name].render({ ...ctx, root: document.getElementById(`view-${name}`) });
+  syncNavThumb(document.querySelector(".fs-nav"));
+  const view = VIEWS[name];
+  const viewCtx = { ...ctx, root: document.getElementById(`view-${name}`) };
+  if (params.get("q") && view.open) view.open(viewCtx, params);
+  else view.render(viewCtx);
 }
 
 async function boot() {

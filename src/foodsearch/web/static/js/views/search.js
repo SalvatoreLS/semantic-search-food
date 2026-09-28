@@ -1,9 +1,9 @@
 import { api } from "../api.js";
-import { esc, icon, imageSlot, noteHtml, wireImageFallbacks } from "../dom.js";
+import { esc, icon, imageSlot, noteHtml, wireImageFallbacks, wireSegs } from "../dom.js";
 import { openDrawer } from "../drawer.js";
-import { cost, grade, isFoodQuery, ms, price, priorText, sourcesShort, tiles } from "../format.js";
+import { cost, grade, isFoodQuery, ms, priceLine, priorText, sourcesShort, tiles } from "../format.js";
 
-const state = { text: "", system: "main", traceOpen: false, data: null, note: "", loading: false };
+const state = { text: "", system: "hybrid", traceOpen: false, data: null, note: "", loading: false };
 
 function searchBar(ctx) {
   return `
@@ -14,9 +14,11 @@ ${icon("search", 20)}
 <input id="fs-q" type="text" value="${esc(state.text)}" placeholder="Descreva o que você quer comer…" autocomplete="off">
 <button class="fs-enter" aria-label="Run query" data-run>${icon("enter", 18)}</button>
 </div>
+<div class="fs-sysfield">
+<span class="fs-eyebrow" aria-hidden="true">System</span>
 <div class="fs-seg" role="group" aria-label="System">
-<span class="fs-eyebrow" style="padding: 0 8px 0 12px">System</span>
 ${ctx.systems.map((s) => `<button aria-pressed="${s.id === state.system}" data-system="${esc(s.id)}">${esc(s.label)}</button>`).join("")}
+</div>
 </div>
 </div>
 <div class="fs-chiprow">
@@ -43,7 +45,7 @@ function understandingPanel(d) {
 <dl class="fs-dl">
 <div class="fs-dl-row"><dt>Intent</dt><dd><span class="fs-chip intent">${esc(d.intent)}</span></dd></div>
 <div class="fs-dl-row"><dt>Expanded dishes</dt><dd class="fs-chips">
-${dishes.length ? dishes.map((t) => `<span class="fs-chip muted">${esc(t)}</span>`).join("") : '<span class="fs-meta">None: expansion only runs for dish and occasion intents.</span>'}
+${dishes.length ? dishes.map((t) => `<span class="fs-chip muted">${esc(t)}</span>`).join("") : '<span class="fs-meta">None: this system sets the intent with a keyword rule and has no LLM expansion.</span>'}
 </dd></div>
 <div class="fs-dl-row"><dt>Food prior</dt><dd style="display: flex; flex-direction: column; gap: 4px"><span class="fs-prior"><span class="${prior.dot}"></span>${esc(prior.text)}</span><span class="fs-meta fs-mono">${esc(d.food_prior?.reason || "")}</span></dd></div>
 </dl>
@@ -89,7 +91,7 @@ function card(r, i, foodQuery) {
 <span class="fs-body">
 <span class="fs-name">${esc(r.name)}</span>
 <span class="fs-meta">${esc(r.category_path)}</span>
-<span class="fs-meta">${price(r.price)} · ${esc(r.price_bucket)}</span>
+<span class="fs-meta">${esc(priceLine(r.price, r.price_bucket))}</span>
 <span class="fs-chips">
 <span class="${g.cls}"><span class="fs-dot"></span>${g.label}</span>
 ${r.is_food ? "" : '<span class="fs-chip nonfood">non-food</span>'}
@@ -133,10 +135,17 @@ async function run(ctx, text) {
   render(ctx);
 }
 
+export function open(ctx, params) {
+  const system = params.get("system");
+  if (ctx.systems.some((s) => s.id === system)) state.system = system;
+  run(ctx, params.get("q"));
+}
+
 export function render(ctx) {
   const root = ctx.root;
   root.innerHTML = `${searchBar(ctx)}${state.note ? noteHtml(state.note) : ""}${body(ctx)}`;
   wireImageFallbacks(root);
+  wireSegs(root);
   const input = root.querySelector("#fs-q");
   input.addEventListener("input", (e) => { state.text = e.target.value; });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") run(ctx, input.value); });

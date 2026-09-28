@@ -96,12 +96,12 @@ def per_type(table: pd.DataFrame, query_tags: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
-def comparison_pairs(systems: Sequence[str], references: Sequence[str]) -> list[tuple[str, str]]:
+def comparison_pairs(systems: Sequence[str], against: Sequence[str]) -> list[tuple[str, str]]:
     pairs: list[tuple[str, str]] = []
-    for ref in (r for r in references if r in systems):
+    for base in (a for a in against if a in systems):
         for system in systems:
-            if system != ref and (ref, system) not in pairs:
-                pairs.append((system, ref))
+            if system != base and (base, system) not in pairs:
+                pairs.append((system, base))
     return pairs
 
 

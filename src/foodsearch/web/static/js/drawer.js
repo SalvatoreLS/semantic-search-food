@@ -1,5 +1,5 @@
 import { esc, icon, imageSlot, wireImageFallbacks } from "./dom.js";
-import { grade, price } from "./format.js";
+import { grade, priceLine } from "./format.js";
 
 const host = () => document.getElementById("fs-drawer-host");
 let lastFocus = null;
@@ -31,7 +31,7 @@ export function openDrawer(result, systemLabel) {
 <span class="fs-img">${imageSlot(result.item_id, "No image for this item", result.is_food, { size: 32 })}</span>
 <div style="display: flex; flex-direction: column; gap: 8px">
 <h3 class="fs-dname">${esc(result.name)}</h3>
-<p class="fs-meta">${esc(result.category_path)} · ${price(result.price)} · ${esc(result.price_bucket)}</p>
+<p class="fs-meta">${esc(result.category_path)} · ${esc(priceLine(result.price, result.price_bucket))}</p>
 <div class="fs-chips">
 <span class="${g.cls}"><span class="fs-dot"></span>${g.label}</span>
 ${result.is_food ? "" : '<span class="fs-chip nonfood">non-food</span>'}

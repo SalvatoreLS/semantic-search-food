@@ -1,8 +1,8 @@
 import { api } from "../api.js";
-import { esc, icon, imageSlot, noteHtml, wireImageFallbacks } from "../dom.js";
+import { esc, icon, imageSlot, noteHtml, wireImageFallbacks, wireSegs } from "../dom.js";
 import { MISSING, grade, isFoodQuery } from "../format.js";
 
-const state = { text: "", left: "r0", right: "main", data: null, note: "", loading: false };
+const state = { text: "", left: "dense_pointwise", right: "hybrid", data: null, note: "", loading: false };
 const STRIP = [["ndcg5", "nDCG@5", false], ["p5", "P@5", false], ["food_leak5", "food-leak@5", true]];
 
 function header(ctx) {
@@ -111,10 +111,19 @@ async function run(ctx, text) {
   render(ctx);
 }
 
+export function open(ctx, params) {
+  for (const side of ["left", "right"]) {
+    const system = params.get(side);
+    if (ctx.systems.some((s) => s.id === system)) state[side] = system;
+  }
+  run(ctx, params.get("q"));
+}
+
 export function render(ctx) {
   const root = ctx.root;
   root.innerHTML = `${header(ctx)}${state.note ? noteHtml(state.note) : ""}${body(ctx)}`;
   wireImageFallbacks(root);
+  wireSegs(root);
   const input = root.querySelector("#fs-cq");
   input.addEventListener("input", (e) => { state.text = e.target.value; });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") run(ctx, input.value); });

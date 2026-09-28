@@ -32,7 +32,7 @@ function current() {
 <h2 class="fs-item-name">${esc(it.name)}</h2>
 <p class="fs-meta" style="font-size: 15px">${esc(it.category_path)}</p>
 ${it.description ? `<p style="font-size: 15px">${esc(it.description)}</p>` : ""}
-<p class="fs-price">${price(it.price)} <span class="fs-meta" style="font-weight: 400">· ${esc(it.price_bucket)}</span></p>
+<p class="fs-price">${price(it.price)}${it.price > 0 ? ` <span class="fs-meta" style="font-weight: 400">· ${esc(it.price_bucket)}</span>` : ""}</p>
 <div class="fs-chips">${attrs.map((a) => `<span class="fs-chip">${esc(a)}</span>`).join("")}</div>
 </div>
 </article>

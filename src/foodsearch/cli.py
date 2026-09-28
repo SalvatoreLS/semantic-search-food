@@ -1,5 +1,7 @@
 import argparse
 import json
+import os
+import socket
 import sys
 import time
 from collections.abc import Sequence
@@ -9,20 +11,30 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import uvicorn
 
 from foodsearch import paths
+from foodsearch.api.app import create_app
+from foodsearch.api.backend import DemoError
 from foodsearch.data import build_items, load_items, load_queries, save_items
 from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
+from foodsearch.eval.ablation import ablations, rerank_gain, restrict
 from foodsearch.eval.agreement import agreement, intra_agreement
+from foodsearch.eval.cost import cost_table
+from foodsearch.eval.failures import failure_table
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
+from foodsearch.eval.plots import delta_plot, grade_mix, grade_mix_plot, pareto_plot
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
 from foodsearch.eval.prompts import LANGS
-from foodsearch.llm import LLMClient, default_client
+from foodsearch.llm import LLMClient, default_client, load_cost_log
 from foodsearch.pipeline import Pipeline, PipelineResult
 from foodsearch.retrievers import Hit, Retriever
-from foodsearch.runs import Run, hits_to_run, load_run, save_run
-from foodsearch.systems import build_system
+from foodsearch.runs import Run, hits_to_run, load_run, save_run, top_k_table
+from foodsearch.systems import build_system, load_systems
+
+SERVE_HOST = "127.0.0.1"
+HEADLINE_SYSTEM = "hybrid"
 
 
 def _load_items() -> pd.DataFrame:
@@ -262,6 +274,16 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     print(f"evaluation frozen in {paths.eval_freeze_json()}")
 
 
+def _metric_inputs() -> tuple[dict[str, bool], dict[str, str], pd.DataFrame]:
+    items = _load_items()
+    tags = pd.read_csv(paths.query_types_csv(), dtype={"query_id": str})
+    return (
+        dict(zip(items["item_id"], items["is_food"], strict=True)),
+        dict(zip(tags["query_id"], tags["type"], strict=True)),
+        tags,
+    )
+
+
 def cmd_eval(args: argparse.Namespace) -> None:
     runs = _load_runs(args.systems)
     if args.qrels == "human":
@@ -274,14 +296,8 @@ def cmd_eval(args: argparse.Namespace) -> None:
         suffix = ""
     if not qrels:
         sys.exit("qrels are empty")
-    items = _load_items()
-    tags = pd.read_csv(paths.query_types_csv(), dtype={"query_id": str})
-    table = metrics.per_query(
-        runs,
-        qrels,
-        dict(zip(items["item_id"], items["is_food"], strict=True)),
-        dict(zip(tags["query_id"], tags["type"], strict=True)),
-    )
+    is_food, query_types, tags = _metric_inputs()
+    table = metrics.per_query(runs, qrels, is_food, query_types)
     pairs = metrics.comparison_pairs(list(runs), args.against)
     out = paths.reports_dir()
     out.mkdir(parents=True, exist_ok=True)
@@ -303,6 +319,122 @@ def cmd_eval(args: argparse.Namespace) -> None:
         f"(excluded from MRR)"
     )
     print(f"reports written to {out}: {', '.join(outputs)}")
+
+
+def cmd_report(args: argparse.Namespace) -> None:
+    suffix = "_human" if args.qrels == "human" else ""
+    out = paths.reports_dir()
+    table = pd.read_csv(
+        _require(out / f"per_query{suffix}.csv", "run `foodsearch eval` first"),
+        dtype={"system": str, "query_id": str},
+    )
+    steps = ablations(table)
+    steps.to_csv(out / f"ablations{suffix}.csv", index=False)
+    view = steps[steps["metric"] == "ndcg5"].set_index("label")
+    print(view[["diff", "lo", "hi", "p_holm", "significant"]].round(3).to_string())
+    print(f"ablations written to {out / f'ablations{suffix}.csv'}")
+    labels = human.load_labels(paths.labels_dir() / "human.csv")
+    if args.qrels == "judge" and paths.qrels_json().exists() and not labels.empty:
+        human_grades = human.human_qrels(labels)
+        judge_grades = restrict(judge.load_qrels(paths.qrels_json()), human_grades)
+        runs = _load_runs(None)
+        is_food, query_types, _ = _metric_inputs()
+        gain = rerank_gain(
+            metrics.per_query(runs, judge_grades, is_food, query_types),
+            metrics.per_query(runs, human_grades, is_food, query_types),
+        )
+        gain.to_csv(out / "rerank_gain_human.csv", index=False)
+        print(gain.set_index("label")[["diff_judge", "diff_human"]].round(3).to_string())
+        print(f"rerank gain on labelled pairs written to {out / 'rerank_gain_human.csv'}")
+    metas = {
+        f.stem: json.loads(f.read_text(encoding="utf-8"))
+        for f in sorted(paths.run_meta_dir().glob("*.json"))
+    }
+    if metas:
+        costs = cost_table(metas, load_systems(args.config), load_cost_log(paths.cost_log()))
+        costs.to_csv(out / "cost.csv", index=False)
+        print(costs.set_index("system").round(4).to_string())
+        print(f"cost and latency written to {out / 'cost.csv'}")
+        if args.qrels == "judge" and paths.qrels_json().exists():
+            _write_plots(costs, out, args.headline)
+            _write_failures(out, args.headline)
+
+
+def _write_failures(out: Path, headline: str) -> None:
+    table = pd.read_csv(out / "per_query.csv", dtype={"system": str, "query_id": str})
+    _, _, tags = _metric_inputs()
+    qrels = judge.load_qrels(paths.qrels_json())
+    worst = failure_table(table, qrels, _load_runs(None), tags, headline)
+    worst.to_csv(out / "failures.csv", index=False)
+    print(worst.round(3).to_string(index=False))
+    print(f"worst {len(worst)} queries of {headline} written to {out / 'failures.csv'}")
+
+
+def _write_plots(costs: pd.DataFrame, out: Path, headline: str) -> None:
+    summary = pd.read_csv(_require(out / "metrics.csv", "run `foodsearch eval` first"))
+    ndcg = summary[summary["metric"] == "ndcg5"].sort_values("mean", ascending=False)
+    mix = grade_mix(_load_runs(None), judge.load_qrels(paths.qrels_json()))
+    plots = out / "plots"
+    pareto_plot(summary, costs, plots / "quality_vs_cost.png")
+    grade_mix_plot(mix, ndcg["system"].tolist(), plots / "grade_mix_top5.png")
+    table = pd.read_csv(out / "per_query.csv", dtype={"system": str, "query_id": str})
+    delta_plot(table, headline, "bm25", plots / f"delta_{headline}_vs_bm25.png")
+    print(f"plots written to {plots}")
+
+
+def cmd_export(args: argparse.Namespace) -> None:
+    run = load_run(_require(paths.runs_dir() / f"{args.system}.json", "run the system first"))
+    table = top_k_table(run, args.system, args.k)
+    out = paths.results_dir() / "final_top10.csv"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    table.to_csv(out, index=False)
+    print(f"{len(table)} rows ({table['query_id'].nunique()} queries) of {args.system} -> {out}")
+
+
+def port_is_free(port: int, host: str = SERVE_HOST) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        if os.name == "posix":
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((host, port))
+        except OSError:
+            return False
+    return True
+
+
+def next_free_port(port: int, attempts: int = 50) -> int | None:
+    candidates = range(port + 1, min(port + 1 + attempts, 65536))
+    return next((p for p in candidates if port_is_free(p)), None)
+
+
+def confirm(question: str) -> bool:
+    try:
+        answer = input(f"{question} [Y/n] ").strip().lower()
+    except EOFError:
+        return False
+    return answer in ("", "y", "yes")
+
+
+def resolve_serve_port(port: int) -> int:
+    if port_is_free(port):
+        return port
+    alternative = next_free_port(port)
+    if alternative is None:
+        sys.exit(f"port {port} is in use and no free port was found nearby; pass --port")
+    question = f"port {port} is in use. Serve on {alternative} instead?"
+    if not sys.stdin.isatty() or not confirm(question):
+        sys.exit(f"port {port} is in use; pass --port")
+    return alternative
+
+
+def cmd_serve(args: argparse.Namespace) -> None:
+    try:
+        app = create_app(config=args.config)
+    except DemoError as e:
+        sys.exit(str(e))
+    port = resolve_serve_port(args.port)
+    print(f"FoodSearch demo on http://{SERVE_HOST}:{port}")
+    uvicorn.run(app, host=SERVE_HOST, port=port)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -354,8 +486,24 @@ def build_parser() -> argparse.ArgumentParser:
     ev = sub.add_parser("eval", help="metrics, CIs and paired tests into reports/")
     ev.add_argument("--systems", nargs="+")
     ev.add_argument("--qrels", choices=["judge", "human"], default="judge")
-    ev.add_argument("--against", nargs="+", default=["bm25", "r0"])
+    ev.add_argument("--against", nargs="+", default=["bm25", "dense_pointwise"])
     ev.set_defaults(func=cmd_eval)
+
+    report = sub.add_parser("report", help="ablation and cost/latency tables into reports/")
+    report.add_argument("--qrels", choices=["judge", "human"], default="judge")
+    report.add_argument("--config", type=Path, default=paths.configs_dir() / "systems.yaml")
+    report.add_argument("--headline", default=HEADLINE_SYSTEM)
+    report.set_defaults(func=cmd_report)
+
+    export = sub.add_parser("export", help="top-k of a system into results/final_top10.csv")
+    export.add_argument("--system", default=HEADLINE_SYSTEM)
+    export.add_argument("-k", type=int, default=10)
+    export.set_defaults(func=cmd_export)
+
+    serve = sub.add_parser("serve", help=f"demo UI and API on http://{SERVE_HOST}")
+    serve.add_argument("--port", type=int, default=8000)
+    serve.add_argument("--config", type=Path, default=paths.configs_dir() / "systems.yaml")
+    serve.set_defaults(func=cmd_serve)
 
     return parser
 
