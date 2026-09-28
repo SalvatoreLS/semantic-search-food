@@ -74,3 +74,11 @@ def eval_freeze_json() -> Path:
 
 def reports_dir() -> Path:
     return project_root() / "reports"
+
+
+def embeddings_dir() -> Path:
+    return artifacts_dir() / "embeddings"
+
+
+def run_meta_dir() -> Path:
+    return runs_dir() / "meta"
