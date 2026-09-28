@@ -19,6 +19,7 @@ from foodsearch.api.backend import DemoError
 from foodsearch.data import build_items, load_items, load_queries, save_items
 from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
+from foodsearch.eval.ablation import ablations
 from foodsearch.eval.agreement import agreement, intra_agreement
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
@@ -312,6 +313,20 @@ def cmd_eval(args: argparse.Namespace) -> None:
     print(f"reports written to {out}: {', '.join(outputs)}")
 
 
+def cmd_report(args: argparse.Namespace) -> None:
+    suffix = "_human" if args.qrels == "human" else ""
+    out = paths.reports_dir()
+    table = pd.read_csv(
+        _require(out / f"per_query{suffix}.csv", "run `foodsearch eval` first"),
+        dtype={"system": str, "query_id": str},
+    )
+    steps = ablations(table)
+    steps.to_csv(out / f"ablations{suffix}.csv", index=False)
+    view = steps[steps["metric"] == "ndcg5"].set_index("label")
+    print(view[["diff", "lo", "hi", "p_holm", "significant"]].round(3).to_string())
+    print(f"ablations written to {out / f'ablations{suffix}.csv'}")
+
+
 def port_is_free(port: int, host: str = SERVE_HOST) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         if os.name == "posix":
@@ -409,6 +424,10 @@ def build_parser() -> argparse.ArgumentParser:
     ev.add_argument("--qrels", choices=["judge", "human"], default="judge")
     ev.add_argument("--against", nargs="+", default=["bm25", "dense_pointwise"])
     ev.set_defaults(func=cmd_eval)
+
+    report = sub.add_parser("report", help="step-wise ablation table from reports/per_query")
+    report.add_argument("--qrels", choices=["judge", "human"], default="judge")
+    report.set_defaults(func=cmd_report)
 
     serve = sub.add_parser("serve", help=f"demo UI and API on http://{SERVE_HOST}")
     serve.add_argument("--port", type=int, default=8000)

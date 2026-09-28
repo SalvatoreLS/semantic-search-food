@@ -1,0 +1,33 @@
+import numpy as np
+import pandas as pd
+import pytest
+
+from foodsearch.eval.ablation import Step, ablations
+
+STEPS = (
+    Step("component", "b", "a", "+ b"),
+    Step("component", "c", "b", "+ c"),
+    Step("other", "c", "a", "c vs a"),
+    Step("component", "missing", "a", "skipped"),
+)
+
+
+def make_table() -> pd.DataFrame:
+    rng = np.random.default_rng(0)
+    base = rng.uniform(0.2, 0.6, 40)
+    frames = [
+        pd.DataFrame({"system": name, "query_id": [f"q{i}" for i in range(40)], "ndcg5": values})
+        for name, values in (("a", base), ("b", base + 0.2), ("c", base + 0.2))
+    ]
+    return pd.concat(frames, ignore_index=True)
+
+
+def test_steps_are_paired_and_corrected_per_family() -> None:
+    result = ablations(make_table(), STEPS, metrics=["ndcg5"]).set_index("label")
+    assert list(result.index) == ["+ b", "+ c", "c vs a"]
+    assert result.loc["+ b", "diff"] == pytest.approx(0.2)
+    assert result.loc["+ b", "ci_excludes_0"] and result.loc["+ b", "significant"]
+    assert result.loc["+ c", "diff"] == pytest.approx(0.0)
+    assert not result.loc["+ c", "ci_excludes_0"]
+    assert result.loc["c vs a", "p_holm"] == pytest.approx(result.loc["c vs a", "p"])
+    assert (result["p_holm"] >= result["p"]).all()
