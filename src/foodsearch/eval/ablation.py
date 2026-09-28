@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from foodsearch.eval.judge import Qrels
 from foodsearch.eval.metrics import METRICS
 from foodsearch.eval.stats import ALPHA, bootstrap_ci, holm, paired_randomization_test
 
@@ -60,3 +61,26 @@ def ablations(
                 row["significant"] = adjusted < ALPHA
             rows += group
     return pd.DataFrame(rows)
+
+
+RERANK_STEPS = (
+    Step("rerank", "main", "qu_fusion", "LLM listwise rerank"),
+    Step("rerank", "qu_fusion_ce", "qu_fusion", "bge cross-encoder rerank"),
+    Step("rerank", "dense_pointwise", "dense_oai_large", "LLM pointwise rerank"),
+)
+
+
+def restrict(qrels: Qrels, to: Qrels) -> Qrels:
+    return {
+        qid: {iid: grade for iid, grade in qrels.get(qid, {}).items() if iid in items}
+        for qid, items in to.items()
+    }
+
+
+def rerank_gain(
+    judge_table: pd.DataFrame, human_table: pd.DataFrame, steps: Sequence[Step] = RERANK_STEPS
+) -> pd.DataFrame:
+    columns = ["label", "system", "base", "n", "diff", "lo", "hi", "p_holm"]
+    judged = ablations(judge_table, steps, ["ndcg5"])[columns]
+    human = ablations(human_table, steps, ["ndcg5"])[columns]
+    return judged.merge(human, on=["label", "system", "base"], suffixes=("_judge", "_human"))

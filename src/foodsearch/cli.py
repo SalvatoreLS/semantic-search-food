@@ -19,7 +19,7 @@ from foodsearch.api.backend import DemoError
 from foodsearch.data import build_items, load_items, load_queries, save_items
 from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
-from foodsearch.eval.ablation import ablations
+from foodsearch.eval.ablation import ablations, rerank_gain, restrict
 from foodsearch.eval.agreement import agreement, intra_agreement
 from foodsearch.eval.cost import cost_table
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
@@ -271,6 +271,16 @@ def cmd_freeze(args: argparse.Namespace) -> None:
     print(f"evaluation frozen in {paths.eval_freeze_json()}")
 
 
+def _metric_inputs() -> tuple[dict[str, bool], dict[str, str], pd.DataFrame]:
+    items = _load_items()
+    tags = pd.read_csv(paths.query_types_csv(), dtype={"query_id": str})
+    return (
+        dict(zip(items["item_id"], items["is_food"], strict=True)),
+        dict(zip(tags["query_id"], tags["type"], strict=True)),
+        tags,
+    )
+
+
 def cmd_eval(args: argparse.Namespace) -> None:
     runs = _load_runs(args.systems)
     if args.qrels == "human":
@@ -283,14 +293,8 @@ def cmd_eval(args: argparse.Namespace) -> None:
         suffix = ""
     if not qrels:
         sys.exit("qrels are empty")
-    items = _load_items()
-    tags = pd.read_csv(paths.query_types_csv(), dtype={"query_id": str})
-    table = metrics.per_query(
-        runs,
-        qrels,
-        dict(zip(items["item_id"], items["is_food"], strict=True)),
-        dict(zip(tags["query_id"], tags["type"], strict=True)),
-    )
+    is_food, query_types, tags = _metric_inputs()
+    table = metrics.per_query(runs, qrels, is_food, query_types)
     pairs = metrics.comparison_pairs(list(runs), args.against)
     out = paths.reports_dir()
     out.mkdir(parents=True, exist_ok=True)
@@ -326,6 +330,19 @@ def cmd_report(args: argparse.Namespace) -> None:
     view = steps[steps["metric"] == "ndcg5"].set_index("label")
     print(view[["diff", "lo", "hi", "p_holm", "significant"]].round(3).to_string())
     print(f"ablations written to {out / f'ablations{suffix}.csv'}")
+    labels = human.load_labels(paths.labels_dir() / "human.csv")
+    if args.qrels == "judge" and paths.qrels_json().exists() and not labels.empty:
+        human_grades = human.human_qrels(labels)
+        judge_grades = restrict(judge.load_qrels(paths.qrels_json()), human_grades)
+        runs = _load_runs(None)
+        is_food, query_types, _ = _metric_inputs()
+        gain = rerank_gain(
+            metrics.per_query(runs, judge_grades, is_food, query_types),
+            metrics.per_query(runs, human_grades, is_food, query_types),
+        )
+        gain.to_csv(out / "rerank_gain_human.csv", index=False)
+        print(gain.set_index("label")[["diff_judge", "diff_human"]].round(3).to_string())
+        print(f"rerank gain on labelled pairs written to {out / 'rerank_gain_human.csv'}")
     metas = {
         f.stem: json.loads(f.read_text(encoding="utf-8"))
         for f in sorted(paths.run_meta_dir().glob("*.json"))
