@@ -1,6 +1,6 @@
 .fs {
   --bg: #FFFFFF; --surface: #F5F7FA; --border: #E3E7EE; --text: #0B0F1A; --text-muted: #5B6475;
-  --accent: #0A3CFF; --accent-soft: #E8EDFF; --accent-text: #0A3CFF; --on-accent: #FFFFFF;
+  --accent: #0332AF; --accent-soft: #E9EEFC; --accent-text: #0332AF; --on-accent: #FFFFFF;
   --grade-3: #0F7B4F; --grade-2: #5A8F00; --grade-1: #B07A00; --grade-0: #B42318; --nonfood: #6B4FBB;
   --good: #0F7B4F; --bad: #B42318;
   --photo-a: #EDF0F5; --photo-b: #E3E8EF;
@@ -15,7 +15,7 @@
 }
 .fs[data-theme="dark"] {
   --bg: #0B0F1A; --surface: #131A2A; --border: #232C40; --text: #F2F4F8; --text-muted: #9AA3B5;
-  --accent: #5C7CFF; --accent-soft: #1A2550; --accent-text: #9DB0FF; --on-accent: #0B0F1A;
+  --accent: #5580F1; --accent-soft: #17264F; --accent-text: #9CB6FC; --on-accent: #0B0F1A;
   --grade-3: #3CCB8A; --grade-2: #9BD34A; --grade-1: #E6B340; --grade-0: #F0776B; --nonfood: #A993F0;
   --good: #3CCB8A; --bad: #F0776B;
   --photo-a: #161E30; --photo-b: #1B2439;
