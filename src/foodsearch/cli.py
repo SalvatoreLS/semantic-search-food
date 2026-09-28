@@ -23,6 +23,7 @@ from foodsearch.eval.ablation import ablations, rerank_gain, restrict
 from foodsearch.eval.agreement import agreement, intra_agreement
 from foodsearch.eval.cost import cost_table
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
+from foodsearch.eval.plots import grade_mix, grade_mix_plot, pareto_plot
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
 from foodsearch.eval.prompts import LANGS
 from foodsearch.llm import LLMClient, default_client, load_cost_log
@@ -352,6 +353,18 @@ def cmd_report(args: argparse.Namespace) -> None:
         costs.to_csv(out / "cost.csv", index=False)
         print(costs.set_index("system").round(4).to_string())
         print(f"cost and latency written to {out / 'cost.csv'}")
+        if args.qrels == "judge" and paths.qrels_json().exists():
+            _write_plots(costs, out)
+
+
+def _write_plots(costs: pd.DataFrame, out: Path) -> None:
+    summary = pd.read_csv(_require(out / "metrics.csv", "run `foodsearch eval` first"))
+    ndcg = summary[summary["metric"] == "ndcg5"].sort_values("mean", ascending=False)
+    mix = grade_mix(_load_runs(None), judge.load_qrels(paths.qrels_json()))
+    plots = out / "plots"
+    pareto_plot(summary, costs, plots / "quality_vs_cost.png")
+    grade_mix_plot(mix, ndcg["system"].tolist(), plots / "grade_mix_top5.png")
+    print(f"plots written to {plots}")
 
 
 def port_is_free(port: int, host: str = SERVE_HOST) -> bool:
