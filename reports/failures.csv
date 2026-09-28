@@ -1,0 +1,11 @@
+query_id,type,us_translated,ndcg5,p5,food_leak5,pool_relevant,pool_perfect,top5_relevant,catalog_gap,best_system,best_ndcg5
+q085,concrete_dish,1,0.6475706287532758,0.6,0.0,9,1,3,False,dense_pointwise,0.9085200473861956
+q057,cuisine_style,0,0.6971568390345979,1.0,0.0,21,4,5,False,dense_pointwise,0.8153807673520377
+q072,concrete_dish,1,0.7025644415727467,0.8,0.0,23,12,4,False,main,0.8799817951409219
+q008,concrete_dish,1,0.7198175284296092,0.4,0.0,4,0,2,True,qu_fusion,0.8310951893751204
+q035,concrete_dish,0,0.7543701539552121,0.4,0.0,6,0,2,False,dense_pointwise,0.8421757737602428
+q060,cuisine_style,0,0.7669283933830499,1.0,0.0,26,8,5,False,qu_fusion_ce,0.7817304474156229
+q086,cuisine_style,0,0.7718828174931716,1.0,0.0,35,5,5,False,dense_pointwise,0.8997382732836167
+q016,concrete_dish,1,0.7773492477204695,0.2,0.0,3,0,1,True,main,0.8757862866154155
+q064,concrete_dish,1,0.7797200684245387,1.0,0.0,33,7,5,False,main,0.8721445442095548
+q034,cuisine_style,0,0.7817304474156229,1.0,0.0,18,8,5,False,dense_pointwise,0.8721445442095548
