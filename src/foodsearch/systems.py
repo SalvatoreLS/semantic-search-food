@@ -4,12 +4,15 @@ from typing import Any
 
 import yaml
 
-from foodsearch.retrievers import BM25Retriever, Retriever
+from foodsearch.pipeline import Pipeline
+from foodsearch.retrievers import BM25Retriever, DenseRetriever, Retriever
 
 RetrieverFactory = Callable[..., Retriever]
 
 REGISTRY: dict[str, RetrieverFactory] = {
     "bm25": BM25Retriever,
+    "dense": DenseRetriever,
+    "pipeline": Pipeline,
 }
 
 
