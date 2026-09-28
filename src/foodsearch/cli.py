@@ -23,7 +23,7 @@ from foodsearch.eval.ablation import ablations, rerank_gain, restrict
 from foodsearch.eval.agreement import agreement, intra_agreement
 from foodsearch.eval.cost import cost_table
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
-from foodsearch.eval.plots import grade_mix, grade_mix_plot, pareto_plot
+from foodsearch.eval.plots import delta_plot, grade_mix, grade_mix_plot, pareto_plot
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
 from foodsearch.eval.prompts import LANGS
 from foodsearch.llm import LLMClient, default_client, load_cost_log
@@ -33,6 +33,7 @@ from foodsearch.runs import Run, hits_to_run, load_run, save_run
 from foodsearch.systems import build_system, load_systems
 
 SERVE_HOST = "127.0.0.1"
+HEADLINE_SYSTEM = "hybrid"
 
 
 def _load_items() -> pd.DataFrame:
@@ -354,16 +355,18 @@ def cmd_report(args: argparse.Namespace) -> None:
         print(costs.set_index("system").round(4).to_string())
         print(f"cost and latency written to {out / 'cost.csv'}")
         if args.qrels == "judge" and paths.qrels_json().exists():
-            _write_plots(costs, out)
+            _write_plots(costs, out, args.headline)
 
 
-def _write_plots(costs: pd.DataFrame, out: Path) -> None:
+def _write_plots(costs: pd.DataFrame, out: Path, headline: str) -> None:
     summary = pd.read_csv(_require(out / "metrics.csv", "run `foodsearch eval` first"))
     ndcg = summary[summary["metric"] == "ndcg5"].sort_values("mean", ascending=False)
     mix = grade_mix(_load_runs(None), judge.load_qrels(paths.qrels_json()))
     plots = out / "plots"
     pareto_plot(summary, costs, plots / "quality_vs_cost.png")
     grade_mix_plot(mix, ndcg["system"].tolist(), plots / "grade_mix_top5.png")
+    table = pd.read_csv(out / "per_query.csv", dtype={"system": str, "query_id": str})
+    delta_plot(table, headline, "bm25", plots / f"delta_{headline}_vs_bm25.png")
     print(f"plots written to {plots}")
 
 
@@ -468,6 +471,7 @@ def build_parser() -> argparse.ArgumentParser:
     report = sub.add_parser("report", help="ablation and cost/latency tables into reports/")
     report.add_argument("--qrels", choices=["judge", "human"], default="judge")
     report.add_argument("--config", type=Path, default=paths.configs_dir() / "systems.yaml")
+    report.add_argument("--headline", default=HEADLINE_SYSTEM)
     report.set_defaults(func=cmd_report)
 
     serve = sub.add_parser("serve", help=f"demo UI and API on http://{SERVE_HOST}")

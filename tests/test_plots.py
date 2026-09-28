@@ -3,7 +3,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from foodsearch.eval.plots import frontier, grade_mix, grade_mix_plot, pareto_plot, spread
+from foodsearch.eval.plots import (
+    delta_plot,
+    frontier,
+    grade_mix,
+    grade_mix_plot,
+    pareto_plot,
+    spread,
+)
 
 
 def test_frontier_treats_near_equal_costs_as_ties() -> None:
@@ -39,3 +46,15 @@ def test_plots_render(tmp_path: Path) -> None:
     )
     grade_mix_plot(mix, ["b", "a"], tmp_path / "mix.png")
     assert (tmp_path / "pareto.png").stat().st_size > 0 and (tmp_path / "mix.png").exists()
+
+
+def test_delta_plot_renders(tmp_path: Path) -> None:
+    table = pd.DataFrame(
+        {
+            "system": ["a", "a", "b", "b"],
+            "query_id": ["q1", "q2", "q1", "q2"],
+            "ndcg5": [0.9, 0.4, 0.5, 0.6],
+        }
+    )
+    delta_plot(table, "a", "b", tmp_path / "delta.png")
+    assert (tmp_path / "delta.png").stat().st_size > 0

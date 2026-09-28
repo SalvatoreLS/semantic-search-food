@@ -148,3 +148,35 @@ def grade_mix_plot(mix: pd.DataFrame, order: Sequence[str], path: Path) -> None:
     fig.tight_layout()
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, facecolor=SURFACE)
+
+
+GAIN = "#2a78d6"
+LOSS = "#e34948"
+
+
+def delta_plot(table: pd.DataFrame, system: str, base: str, path: Path) -> None:
+    wide = table.pivot(index="query_id", columns="system", values="ndcg5")[[system, base]]
+    delta = (wide[system] - wide[base]).dropna().sort_values(ascending=False)
+    wins, losses = int((delta > 0).sum()), int((delta < 0).sum())
+    fig = Figure(figsize=(8, 4.5), dpi=200, facecolor=SURFACE)
+    ax = fig.subplots()
+    _style(ax)
+    ax.grid(axis="x", visible=False)
+    colors = [GAIN if d >= 0 else LOSS for d in delta]
+    ax.bar(range(len(delta)), delta, color=colors, width=0.8, edgecolor=SURFACE, linewidth=0.5)
+    ax.axhline(0, color=MUTED, linewidth=1)
+    ax.set_xticks([])
+    ax.set_xlim(-1, len(delta))
+    ax.set_xlabel(f"{len(delta)} queries, sorted by gain", color=MUTED, fontsize=9)
+    ax.set_ylabel(f"nDCG@5 {system} minus {base}", color=MUTED, fontsize=9)
+    ax.set_title(
+        f"Per-query gain of {system} over {base}: {wins} better, {losses} worse, "
+        f"{len(delta) - wins - losses} tied",
+        loc="left",
+        color=TEXT,
+        fontsize=12,
+        fontweight="semibold",
+    )
+    fig.tight_layout()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, facecolor=SURFACE)
