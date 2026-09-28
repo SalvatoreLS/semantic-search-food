@@ -1,7 +1,7 @@
 import { api } from "../api.js";
 import { esc, icon, imageSlot, noteHtml, wireImageFallbacks } from "../dom.js";
 import { openDrawer } from "../drawer.js";
-import { cost, grade, isFoodQuery, ms, price, priorText, sourcesShort, tiles } from "../format.js";
+import { cost, grade, isFoodQuery, ms, priceLine, priorText, sourcesShort, tiles } from "../format.js";
 
 const state = { text: "", system: "main", traceOpen: false, data: null, note: "", loading: false };
 
@@ -89,7 +89,7 @@ function card(r, i, foodQuery) {
 <span class="fs-body">
 <span class="fs-name">${esc(r.name)}</span>
 <span class="fs-meta">${esc(r.category_path)}</span>
-<span class="fs-meta">${price(r.price)} · ${esc(r.price_bucket)}</span>
+<span class="fs-meta">${esc(priceLine(r.price, r.price_bucket))}</span>
 <span class="fs-chips">
 <span class="${g.cls}"><span class="fs-dot"></span>${g.label}</span>
 ${r.is_food ? "" : '<span class="fs-chip nonfood">non-food</span>'}

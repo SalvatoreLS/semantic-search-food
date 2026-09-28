@@ -17,7 +17,12 @@ export const QUERY_METRICS = [
 ];
 
 export function price(value) {
-  return value == null ? MISSING : `R$ ${Number(value).toFixed(2).replace(".", ",")}`;
+  if (value == null) return MISSING;
+  return value > 0 ? `R$ ${Number(value).toFixed(2).replace(".", ",")}` : "price not listed";
+}
+
+export function priceLine(value, bucket) {
+  return value > 0 ? `${price(value)} · ${bucket}` : price(value);
 }
 
 export function cost(value) {

@@ -23,10 +23,11 @@ function table(ctx, s) {
     const cells = KEYS.map(([k]) => {
       const v = r[k];
       if (!v) return `<td>${MISSING}</td>`;
-      return `<td><span class="${v[0] === best[k] ? "fs-best" : ""}">${v[0].toFixed(2)}</span><span class="fs-ci">[${v[1].toFixed(2)}, ${v[2].toFixed(2)}]</span></td>`;
+      const ci = v[1] == null || v[2] == null ? "" : `<span class="fs-ci">[${v[1].toFixed(2)}, ${v[2].toFixed(2)}]</span>`;
+      return `<td><span class="${v[0] === best[k] ? "fs-best" : ""}">${v[0].toFixed(2)}</span>${ci}</td>`;
     }).join("");
     return `<tr><td><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">${esc(info.label)}</span><span class="fs-meta" style="font-weight: 400">${esc(info.desc)}</span></span></td>${cells}</tr>`;
-  }).join("");
+  }).join("") || `<tr><td colspan="5"><span class="fs-meta">No metrics yet: they appear after <code>foodsearch judge --subset all</code> and <code>foodsearch eval</code>.</span></td></tr>`;
   return `<table class="fs-table"><thead><tr><th scope="col">System</th><th scope="col">nDCG@5</th><th scope="col">nDCG@10</th><th scope="col">P@5</th><th scope="col">food-leak@5 ↓</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
