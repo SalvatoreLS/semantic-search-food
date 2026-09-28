@@ -9,8 +9,11 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import uvicorn
 
 from foodsearch import paths
+from foodsearch.api.app import create_app
+from foodsearch.api.backend import DemoError
 from foodsearch.data import build_items, load_items, load_queries, save_items
 from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
@@ -23,6 +26,8 @@ from foodsearch.pipeline import Pipeline, PipelineResult
 from foodsearch.retrievers import Hit, Retriever
 from foodsearch.runs import Run, hits_to_run, load_run, save_run
 from foodsearch.systems import build_system
+
+SERVE_HOST = "127.0.0.1"
 
 
 def _load_items() -> pd.DataFrame:
@@ -305,6 +310,15 @@ def cmd_eval(args: argparse.Namespace) -> None:
     print(f"reports written to {out}: {', '.join(outputs)}")
 
 
+def cmd_serve(args: argparse.Namespace) -> None:
+    try:
+        app = create_app(config=args.config)
+    except DemoError as e:
+        sys.exit(str(e))
+    print(f"FoodSearch demo on http://{SERVE_HOST}:{args.port}")
+    uvicorn.run(app, host=SERVE_HOST, port=args.port)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="foodsearch")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -356,6 +370,11 @@ def build_parser() -> argparse.ArgumentParser:
     ev.add_argument("--qrels", choices=["judge", "human"], default="judge")
     ev.add_argument("--against", nargs="+", default=["bm25", "r0"])
     ev.set_defaults(func=cmd_eval)
+
+    serve = sub.add_parser("serve", help=f"demo UI and API on http://{SERVE_HOST}")
+    serve.add_argument("--port", type=int, default=8000)
+    serve.add_argument("--config", type=Path, default=paths.configs_dir() / "systems.yaml")
+    serve.set_defaults(func=cmd_serve)
 
     return parser
 
