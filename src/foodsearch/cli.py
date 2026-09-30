@@ -27,7 +27,7 @@ from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_fr
 from foodsearch.eval.plots import delta_plot, grade_mix, grade_mix_plot, pareto_plot
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
 from foodsearch.eval.prompts import LANGS
-from foodsearch.llm import LLMClient, default_client, load_cost_log
+from foodsearch.llm import JUDGE_MODEL, LLMClient, default_client, load_cost_log
 from foodsearch.pipeline import Pipeline, PipelineResult
 from foodsearch.retrievers import Hit, Retriever
 from foodsearch.runs import Run, hits_to_run, load_run, save_run, top_k_table
@@ -216,7 +216,7 @@ def cmd_judge(args: argparse.Namespace) -> None:
         pool = load_pool(_require(paths.pool_json(), "run `foodsearch pool` first"))
         pairs = pool.pairs()
     else:
-        model, lang = args.model or judge.JUDGE_MODEL, args.lang or "en"
+        model, lang = args.model or JUDGE_MODEL, args.lang or "en"
         pairs = [(p.query_id, p.item_id) for p in _label_queue() if p.pass_ == 1]
     queries = load_queries(paths.queries_csv())
     judge_pairs = judge.make_pairs(pairs, queries, _load_items())
@@ -472,7 +472,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     judge_p = sub.add_parser("judge", help="grade pooled pairs with the LLM judge")
     judge_p.add_argument("--subset", choices=["human", "all"], required=True)
-    judge_p.add_argument("--model", help=f"human subset only (default {judge.JUDGE_MODEL})")
+    judge_p.add_argument("--model", help=f"human subset only (default {JUDGE_MODEL})")
     judge_p.add_argument("--lang", choices=LANGS, help="human subset only (default en)")
     judge_p.add_argument("--workers", type=int, default=8)
     judge_p.set_defaults(func=cmd_judge)
@@ -482,7 +482,7 @@ def build_parser() -> argparse.ArgumentParser:
         ("freeze", cmd_freeze, "freeze rubric, prompt and judge into artifacts/eval_freeze.json"),
     ]:
         p = sub.add_parser(command, help=help_text)
-        p.add_argument("--model", default=judge.JUDGE_MODEL)
+        p.add_argument("--model", default=JUDGE_MODEL)
         p.add_argument("--lang", choices=LANGS, required=True)
         p.set_defaults(func=func)
 

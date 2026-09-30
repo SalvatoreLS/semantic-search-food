@@ -6,8 +6,13 @@ from typing import Any, Protocol
 from pydantic import BaseModel, Field
 
 from foodsearch.device import resolve_device
-from foodsearch.eval.judge import JUDGE_MODEL, RERANKER_MODEL
-from foodsearch.llm import LLMClient, LLMResponseError, default_client
+from foodsearch.llm import (
+    JUDGE_MODEL,
+    RERANKER_MODEL,
+    LLMClient,
+    LLMResponseError,
+    default_client,
+)
 from foodsearch.retrievers.base import Hit
 
 

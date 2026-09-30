@@ -6,8 +6,8 @@ from typing import Any, Literal
 import pandas as pd
 
 from foodsearch.cards import item_card
-from foodsearch.llm import LLMClient, LLMResponseError, default_client
-from foodsearch.query import UNDERSTANDING_MODEL, QueryUnderstanding, rule_intent, understand
+from foodsearch.llm import UNDERSTANDING_MODEL, LLMClient, LLMResponseError, default_client
+from foodsearch.query import QueryUnderstanding, rule_intent, understand
 from foodsearch.rerank import PriorTrace, Reranker, apply_order, build_reranker, food_prior
 from foodsearch.retrievers.base import Hit
 from foodsearch.retrievers.bm25 import BM25Retriever

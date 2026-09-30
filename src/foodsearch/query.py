@@ -4,10 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from foodsearch.llm import LLMClient
+from foodsearch.llm import UNDERSTANDING_MODEL, LLMClient
 from foodsearch.text import tokenize
-
-UNDERSTANDING_MODEL = "gpt-4.1-mini"
 
 Intent = Literal["dish", "grocery", "product", "occasion"]
 MealShift = Literal["breakfast", "lunch", "snack", "dinner", "dawn", "any"]

@@ -6,10 +6,9 @@ from typing import Any
 
 from foodsearch.eval.agreement import AgreementReport
 from foodsearch.eval.human import LabelPair
-from foodsearch.eval.judge import RERANKER_MODEL
 from foodsearch.eval.pooling import Pool
 from foodsearch.eval.prompts import RUBRIC_VERSION, Lang, few_shot_hash, system_prompt_hash
-from foodsearch.llm import text_hash
+from foodsearch.llm import RERANKER_MODEL, text_hash
 
 
 def write_freeze(

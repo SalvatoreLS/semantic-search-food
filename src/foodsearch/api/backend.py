@@ -37,9 +37,14 @@ from foodsearch.eval import human, judge
 from foodsearch.eval.freeze import load_freeze
 from foodsearch.eval.pooling import ranked
 from foodsearch.images import ImageIndex, images_dir
-from foodsearch.llm import LLMClient, LLMResponseError, load_cost_log
+from foodsearch.llm import (
+    JUDGE_MODEL,
+    UNDERSTANDING_MODEL,
+    LLMClient,
+    LLMResponseError,
+    load_cost_log,
+)
 from foodsearch.pipeline import Pipeline, PipelineResult
-from foodsearch.query import UNDERSTANDING_MODEL
 from foodsearch.retrievers import Retriever
 from foodsearch.runs import Run, load_run
 from foodsearch.systems import REGISTRY, load_systems
@@ -326,7 +331,7 @@ class DemoBackend:
 
     def _judge_model(self) -> str:
         freeze = self._freeze()
-        return freeze["judge_model"] if freeze else judge.JUDGE_MODEL
+        return freeze["judge_model"] if freeze else JUDGE_MODEL
 
     def _judge_result(self) -> judge.JudgeResult | None:
         freeze = self._freeze()

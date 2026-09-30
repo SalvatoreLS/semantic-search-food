@@ -19,6 +19,9 @@ from openai import OpenAI
 from foodsearch import paths
 
 EMBED_BATCH = 256
+JUDGE_MODEL = "gpt-4.1"
+RERANKER_MODEL = "gpt-4.1-mini"
+UNDERSTANDING_MODEL = "gpt-4.1-mini"
 
 T = TypeVar("T")
 

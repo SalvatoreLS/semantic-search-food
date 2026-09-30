@@ -14,10 +14,8 @@ from pydantic import BaseModel, ValidationError
 
 from foodsearch.cards import item_card
 from foodsearch.eval.prompts import RUBRIC_VERSION, Lang, judge_messages
-from foodsearch.llm import LLMClient, LLMResponseError
+from foodsearch.llm import RERANKER_MODEL, LLMClient, LLMResponseError
 
-JUDGE_MODEL = "gpt-4.1"
-RERANKER_MODEL = "gpt-4.1-mini"
 MAX_ATTEMPTS = 5
 SEED = 20260926
 
