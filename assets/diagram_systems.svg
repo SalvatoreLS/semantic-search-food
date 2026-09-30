@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 560" width="1500" height="560" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="Systems and ablation ladder">
+  <title>Systems and ablation ladder</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#5B6475"/>
+    </marker>
+  </defs>
+  <rect width="1500" height="560" fill="#FFFFFF"/>
+  <rect x="20" y="23" width="14" height="14" rx="3" fill="#0332AF" stroke="#0332AF" stroke-width="1.5"/>
+  <text x="42" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">headline system</text>
+  <rect x="200" y="23" width="14" height="14" rx="3" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+  <text x="222" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">built and measured</text>
+  <rect x="420" y="23" width="14" height="14" rx="3" fill="#FFFFFF" stroke="#B42318" stroke-width="1.5"/>
+  <text x="442" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">hurts, dropped</text>
+  <rect x="590" y="23" width="14" height="14" rx="3" fill="#FFFFFF" stroke="#C9D0DC" stroke-width="1.5"/>
+  <text x="612" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">considered, not built</text>
+  <g>
+    <rect x="20" y="230" width="210" height="100" rx="10" fill="#FFFFFF" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="125.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">S0 BM25</text>
+    <text x="125.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#5B6475">baseline</text>
+    <text x="125.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#5B6475">nDCG@5 0.576</text>
+  </g>
+  <g>
+    <rect x="270" y="230" width="210" height="100" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="375.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">S2 Dense</text>
+    <text x="375.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#5B6475">text-embedding-3-large</text>
+    <text x="375.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#5B6475">0.821</text>
+  </g>
+  <g>
+    <rect x="520" y="230" width="210" height="100" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="625.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">S4 + food prior</text>
+    <text x="625.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#5B6475">rule intent, λ 0.5</text>
+    <text x="625.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#5B6475">0.829 (+0.008)</text>
+  </g>
+  <g>
+    <rect x="770" y="230" width="210" height="100" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="875.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">S5 + LLM query</text>
+    <text x="875.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#5B6475">understanding, RRF</text>
+    <text x="875.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#5B6475">0.883 (+0.054)</text>
+  </g>
+  <g>
+    <rect x="1020" y="230" width="210" height="100" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="1125.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">S7 + listwise</text>
+    <text x="1125.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#5B6475">rerank top 30</text>
+    <text x="1125.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#5B6475">0.927 (+0.043)</text>
+  </g>
+  <g>
+    <rect x="1270" y="230" width="210" height="100" rx="10" fill="#0332AF" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="1375.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#FFFFFF">S8 Hybrid</text>
+    <text x="1375.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#E9EEFC">+ BM25 in RRF</text>
+    <text x="1375.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#E9EEFC">0.937 (+0.011)</text>
+  </g>
+  <path d="M 230 280.0 H 270" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 480 280.0 H 520" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 730 280.0 H 770" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 980 280.0 H 1020" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 1230 280.0 H 1270" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <g>
+    <rect x="20" y="420" width="210" height="90" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="125.0" y="451.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">S1 / S3 backends</text>
+    <text x="125.0" y="474.1" text-anchor="middle" font-size="13.5" fill="#5B6475">oai-small 0.747</text>
+    <text x="125.0" y="493.1" text-anchor="middle" font-size="13.5" fill="#5B6475">e5 0.621, bge-m3 0.673</text>
+  </g>
+  <g>
+    <rect x="270" y="420" width="210" height="90" rx="10" fill="#E9EEFC" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="375.0" y="451.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0332AF">S9 Pointwise</text>
+    <text x="375.0" y="474.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">LLM 0-10, top 50</text>
+    <text x="375.0" y="493.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">0.915</text>
+  </g>
+  <g>
+    <rect x="770" y="420" width="210" height="90" rx="10" fill="#FFFFFF" stroke="#B42318" stroke-width="1.5"/>
+    <text x="875.0" y="451.1" text-anchor="middle" font-size="17" font-weight="600" fill="#B42318">S6 Cross-encoder</text>
+    <text x="875.0" y="474.1" text-anchor="middle" font-size="13.5" fill="#5B6475">bge-reranker-v2-m3</text>
+    <text x="875.0" y="493.1" text-anchor="middle" font-size="13.5" fill="#5B6475">0.792 (-0.092)</text>
+  </g>
+  <path d="M 320 330 V 380 H 125 V 420" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 425 330 V 420" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 875 330 V 420" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <g>
+    <rect x="1020" y="80" width="460" height="80" rx="10" fill="#FFFFFF" stroke="#C9D0DC" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <text x="1250.0" y="115.6" text-anchor="middle" font-size="17" font-weight="600" fill="#5B6475">S10 / S11 (not built)</text>
+    <text x="1250.0" y="138.6" text-anchor="middle" font-size="13.5" fill="#5B6475">LLM doc enrichment, denoised search terms</text>
+  </g>
+  <path d="M 1375 230 V 160" fill="none" stroke="#5B6475" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+  <text x="20" y="545" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">Main row: each system adds one component to the previous one. nDCG@5 on 100 queries, change vs the previous step.</text>
+</svg>

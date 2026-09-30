@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 430" width="1160" height="430" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="Demo architecture">
+  <title>Demo architecture</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#5B6475"/>
+    </marker>
+  </defs>
+  <rect width="1160" height="430" fill="#FFFFFF"/>
+  <g>
+    <rect x="20" y="120" width="260" height="200" rx="10" fill="#FFFFFF" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="150.0" y="187.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Browser</text>
+    <text x="150.0" y="210.0" text-anchor="middle" font-size="13.5" fill="#5B6475">static index.html + fs.css</text>
+    <text x="150.0" y="229.0" text-anchor="middle" font-size="13.5" fill="#5B6475">vanilla ES modules</text>
+    <text x="150.0" y="248.0" text-anchor="middle" font-size="13.5" fill="#5B6475">Search, Compare,</text>
+    <text x="150.0" y="267.0" text-anchor="middle" font-size="13.5" fill="#5B6475">Label, About views</text>
+  </g>
+  <g>
+    <rect x="400" y="40" width="320" height="360" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="560.0" y="158.6" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">FastAPI backend</text>
+    <text x="560.0" y="181.5" text-anchor="middle" font-size="13.5" fill="#5B6475">/api/queries</text>
+    <text x="560.0" y="200.5" text-anchor="middle" font-size="13.5" fill="#5B6475">/api/search</text>
+    <text x="560.0" y="219.5" text-anchor="middle" font-size="13.5" fill="#5B6475">/api/compare</text>
+    <text x="560.0" y="238.5" text-anchor="middle" font-size="13.5" fill="#5B6475">/api/summary</text>
+    <text x="560.0" y="257.5" text-anchor="middle" font-size="13.5" fill="#5B6475">/api/label (queue, post, export)</text>
+    <text x="560.0" y="276.5" text-anchor="middle" font-size="13.5" fill="#5B6475">/images/{item_id}</text>
+    <text x="560.0" y="295.5" text-anchor="middle" font-size="13.5" fill="#5B6475">served by uvicorn</text>
+  </g>
+  <path d="M 280 200 H 400" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 400 240 H 280" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="340" y="190" text-anchor="middle" font-size="13" font-weight="400" fill="#5B6475">HTTP</text>
+  <text x="340" y="262" text-anchor="middle" font-size="13" font-weight="400" fill="#5B6475">JSON</text>
+  <g>
+    <rect x="840" y="40" width="300" height="70" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="990.0" y="70.6" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Runs + cached traces</text>
+    <text x="990.0" y="93.5" text-anchor="middle" font-size="13.5" fill="#5B6475">replay of the 100 queries, no key</text>
+  </g>
+  <path d="M 720 75.0 H 840" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <g>
+    <rect x="840" y="130" width="300" height="70" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="990.0" y="160.6" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Qrels + reports</text>
+    <text x="990.0" y="183.5" text-anchor="middle" font-size="13.5" fill="#5B6475">judge grades, metrics, κ</text>
+  </g>
+  <path d="M 720 165.0 H 840" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <g>
+    <rect x="840" y="220" width="300" height="70" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="990.0" y="250.6" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Image cache</text>
+    <text x="990.0" y="273.6" text-anchor="middle" font-size="13.5" fill="#5B6475">artifacts/images, local only</text>
+  </g>
+  <path d="M 720 255.0 H 840" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <g>
+    <rect x="840" y="310" width="300" height="70" rx="10" fill="#FFFFFF" stroke="#C9D0DC" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <text x="990.0" y="340.6" text-anchor="middle" font-size="17" font-weight="600" fill="#5B6475">OpenAI API</text>
+    <text x="990.0" y="363.6" text-anchor="middle" font-size="13.5" fill="#5B6475">free-text queries only</text>
+  </g>
+  <path d="M 720 345.0 H 840" fill="none" stroke="#5B6475" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+</svg>
