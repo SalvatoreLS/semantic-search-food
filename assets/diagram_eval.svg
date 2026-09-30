@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 500" width="1350" height="500" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="Evaluation without ground truth">
+  <title>Evaluation without ground truth</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#5B6475"/>
+    </marker>
+  </defs>
+  <rect width="1350" height="500" fill="#FFFFFF"/>
+  <rect x="20" y="23" width="14" height="14" rx="3" fill="#0332AF" stroke="#0332AF" stroke-width="1.5"/>
+  <text x="42" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">LLM judge (gpt-4.1, not the reranker)</text>
+  <rect x="330" y="23" width="14" height="14" rx="3" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+  <text x="352" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">evaluation step</text>
+  <rect x="510" y="23" width="14" height="14" rx="3" fill="#E9EEFC" stroke="#0332AF" stroke-width="1.5"/>
+  <text x="532" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">human check</text>
+  <g>
+    <rect x="20" y="105.0" width="200" height="110" rx="10" fill="#FFFFFF" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="120.0" y="146.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">11 systems</text>
+    <text x="120.0" y="169.0" text-anchor="middle" font-size="13.5" fill="#5B6475">top 10 per query</text>
+    <text x="120.0" y="188.0" text-anchor="middle" font-size="13.5" fill="#5B6475">100 queries</text>
+  </g>
+  <g>
+    <rect x="280" y="105.0" width="200" height="110" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="380.0" y="146.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Pool</text>
+    <text x="380.0" y="169.0" text-anchor="middle" font-size="13.5" fill="#5B6475">union, deduplicated</text>
+    <text x="380.0" y="188.0" text-anchor="middle" font-size="13.5" fill="#5B6475">4,228 pairs</text>
+  </g>
+  <g>
+    <rect x="540" y="105.0" width="230" height="110" rx="10" fill="#0332AF" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="655.0" y="146.1" text-anchor="middle" font-size="17" font-weight="600" fill="#FFFFFF">LLM judge</text>
+    <text x="655.0" y="169.0" text-anchor="middle" font-size="13.5" fill="#E9EEFC">grade 0-3, rubric v1</text>
+    <text x="655.0" y="188.0" text-anchor="middle" font-size="13.5" fill="#E9EEFC">system-blind, shuffled</text>
+  </g>
+  <g>
+    <rect x="830" y="105.0" width="170" height="110" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="915.0" y="146.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Qrels</text>
+    <text x="915.0" y="169.0" text-anchor="middle" font-size="13.5" fill="#5B6475">all pooled pairs</text>
+    <text x="915.0" y="188.0" text-anchor="middle" font-size="13.5" fill="#5B6475">0 failed calls</text>
+  </g>
+  <g>
+    <rect x="1060" y="105.0" width="270" height="110" rx="10" fill="#FFFFFF" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="1195.0" y="146.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Metrics</text>
+    <text x="1195.0" y="169.0" text-anchor="middle" font-size="13.5" fill="#5B6475">nDCG@5 primary, P@5, MRR</text>
+    <text x="1195.0" y="188.0" text-anchor="middle" font-size="13.5" fill="#5B6475">bootstrap CIs, Holm</text>
+  </g>
+  <g>
+    <rect x="280" y="335.0" width="200" height="110" rx="10" fill="#E9EEFC" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="380.0" y="376.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0332AF">Human labels</text>
+    <text x="380.0" y="399.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">18 stratified queries</text>
+    <text x="380.0" y="418.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">300 blind labels</text>
+  </g>
+  <g>
+    <rect x="540" y="335.0" width="230" height="110" rx="10" fill="#E9EEFC" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="655.0" y="376.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0332AF">Weighted κ 0.759</text>
+    <text x="655.0" y="399.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">binary κ 0.652</text>
+    <text x="655.0" y="418.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">gate: both ≥ 0.6</text>
+  </g>
+  <g>
+    <rect x="830" y="335.0" width="170" height="110" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+    <text x="915.0" y="376.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">Freeze</text>
+    <text x="915.0" y="399.1" text-anchor="middle" font-size="13.5" fill="#5B6475">rubric v1 + prompt</text>
+    <text x="915.0" y="418.1" text-anchor="middle" font-size="13.5" fill="#5B6475">before final runs</text>
+  </g>
+  <path d="M 220 160 H 280" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 480 160 H 540" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 770 160 H 830" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 1000 160 H 1060" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 380 215.0 V 335.0" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 480 390 H 540" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 655 215.0 V 335.0" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 770 390 H 830" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 915 335.0 V 215.0" fill="none" stroke="#5B6475" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="392" y="275" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">sample</text>
+  <text x="667" y="275" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">human subset</text>
+  <text x="927" y="275" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">judge all pairs</text>
+</svg>
