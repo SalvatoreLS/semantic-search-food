@@ -26,3 +26,38 @@ a.fs-ghostbtn { text-decoration: none; }
 @media (max-width: 900px) {
   .fs-tag { display: none; }
 }
+.fs-progress { position: relative; height: 2px; margin-top: 24px; overflow: hidden; border-radius: 999px; background: var(--accent-soft); }
+.fs-progress span { position: absolute; top: 0; bottom: 0; left: 0; width: 30%; border-radius: 999px; background: var(--accent); animation: fs-indet 1.2s ease-in-out infinite; }
+.fs-loadline { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+.fs-loadline strong { color: var(--text); font-weight: 600; }
+.fs-loadline .fs-status { flex: none; }
+.fs-elapsed { margin-left: auto; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.fs-pulse { animation: fs-pulse 1.2s ease-in-out infinite; }
+.fs-skelwrap { animation: fs-in .2s ease-out both; }
+.fs-main.fs-skelwrap { margin-top: 16px; }
+.fs-skel { display: block; height: 12px; width: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--border) 30%, color-mix(in srgb, var(--border) 35%, var(--bg)) 50%, var(--border) 70%); background-size: 300% 100%; animation: fs-shimmer 1.4s linear infinite; }
+.fs-skel.fs-skel-h { height: 18px; width: 55%; }
+.fs-skel.w80 { width: 80%; }
+.fs-skel.w60 { width: 60%; }
+.fs-skel.w40 { width: 40%; }
+.fs-skel.w20 { width: 20%; }
+.fs-skel.fs-skel-chip { height: 20px; width: 64px; border-radius: 999px; }
+.fs-skel.fs-skel-rank { height: 20px; width: 18px; justify-self: end; }
+.fs-skel.fs-skel-fill { position: absolute; inset: 0; height: auto; width: auto; border-radius: 0; }
+.fs-skelpanel, .fs-skelstack { display: flex; flex-direction: column; gap: 12px; }
+.fs-skelpanel .fs-skel-h { margin-bottom: 4px; }
+.fs-skelstack { gap: 8px; flex: 1; }
+.fs-mtile.fs-skelstack { align-items: stretch; }
+.fs-skelcard { cursor: default; }
+.fs-skelcard:hover { box-shadow: none; border-color: var(--border); }
+.fs-skelcard .fs-body { gap: 8px; }
+.fs-skelrow { animation: fs-in .15s ease-out both; }
+.fs-skelrow .fs-li-main { gap: 8px; }
+.fs-skelrow .fs-li-right { gap: 8px; }
+@keyframes fs-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes fs-indet { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+@keyframes fs-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+@media (prefers-reduced-motion: reduce) {
+  .fs-skel, .fs-pulse, .fs-skelwrap, .fs-skelcard, .fs-skelrow { animation: none; }
+  .fs-progress span { animation: none; width: 100%; opacity: 0.5; }
+}

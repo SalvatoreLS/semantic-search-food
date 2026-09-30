@@ -123,3 +123,44 @@ export function syncNavThumb(nav) {
 export function noteHtml(text) {
   return `<p class="fs-note" role="status">${icon("info", 14)}${esc(text)}</p>`;
 }
+
+export function skel(cls = "") {
+  return `<span class="fs-skel${cls ? ` ${cls}` : ""}"></span>`;
+}
+
+export function loadingStatus(html) {
+  return `
+<div class="fs-progress" aria-hidden="true"><span></span></div>
+<p class="fs-loadline" role="status"><span class="fs-status fs-pulse"></span><span>${html}</span><span class="fs-elapsed" aria-hidden="true" data-elapsed></span></p>`;
+}
+
+export function createLoader(delayMs = 150) {
+  let seq = 0;
+  let delay = 0;
+  let tick = 0;
+  const stop = () => {
+    clearTimeout(delay);
+    clearInterval(tick);
+  };
+  return {
+    start(root, show) {
+      stop();
+      const id = ++seq;
+      const t0 = performance.now();
+      const update = () => {
+        const el = root.querySelector("[data-elapsed]");
+        if (el) el.textContent = `${((performance.now() - t0) / 1000).toFixed(1)} s`;
+      };
+      delay = setTimeout(() => {
+        show();
+        update();
+        tick = setInterval(update, 100);
+      }, delayMs);
+      return () => {
+        if (id !== seq) return false;
+        stop();
+        return true;
+      };
+    },
+  };
+}

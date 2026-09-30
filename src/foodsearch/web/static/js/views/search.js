@@ -1,9 +1,10 @@
 import { api } from "../api.js";
-import { esc, icon, imageSlot, noteHtml, wireImageFallbacks, wireSegs } from "../dom.js";
+import { createLoader, esc, icon, imageSlot, loadingStatus, noteHtml, skel, wireImageFallbacks, wireSegs } from "../dom.js";
 import { openDrawer } from "../drawer.js";
 import { cost, grade, isFoodQuery, ms, priceLine, priorText, sourcesShort, tiles } from "../format.js";
 
 const state = { text: "", system: "hybrid", traceOpen: false, data: null, note: "", loading: false };
+const loader = createLoader();
 
 function searchBar(ctx) {
   return `
@@ -102,8 +103,26 @@ ${r.is_food ? "" : '<span class="fs-chip nonfood">non-food</span>'}
 </button>`;
 }
 
+function skeleton(ctx) {
+  const panel = (lines) => `<div class="fs-panel fs-skelpanel">${skel("fs-skel-h")}${lines.map((w) => skel(w)).join("")}</div>`;
+  const cards = Array.from({ length: 10 }, (_, i) => `
+<div class="fs-card fs-skelcard" style="animation-delay: ${i * 30}ms">
+<span class="fs-img">${skel("fs-skel-fill")}</span>
+<span class="fs-body">${skel("w80")}${skel("w60")}${skel("w40")}<span class="fs-chips">${skel("fs-skel-chip")}${skel("fs-skel-chip")}</span></span>
+</div>`).join("");
+  return `
+${loadingStatus(`Running <strong>${esc(state.text)}</strong> on ${esc(ctx.systemLabel(state.system))}`)}
+<div class="fs-main fs-skelwrap" aria-hidden="true">
+<aside class="fs-side">${panel(["w80", "w60", "w40"])}${panel(["w60"])}${panel(["w80", "w40"])}</aside>
+<section class="fs-results">
+<div class="fs-reshead">${skel("fs-skel-h w40")}</div>
+<div class="fs-grid">${cards}</div>
+</section>
+</div>`;
+}
+
 function body(ctx) {
-  if (state.loading) return '<p class="fs-loading" role="status">Running query…</p>';
+  if (state.loading) return skeleton(ctx);
   const d = state.data;
   if (!d) return state.note ? "" : '<p class="fs-empty">Pick one of the 100 evaluation queries or type your own.</p>';
   const sysLabel = ctx.systemLabel(d.system);
@@ -122,15 +141,22 @@ async function run(ctx, text) {
   const q = (text || "").trim();
   if (!q) return;
   state.text = q;
-  state.loading = true;
-  state.note = "";
   render(ctx);
+  const settle = loader.start(ctx.root, () => {
+    state.loading = true;
+    state.note = "";
+    render(ctx);
+  });
+  let data = null;
+  let note = "";
   try {
-    state.data = await api.search(q, state.system);
+    data = await api.search(q, state.system);
   } catch (err) {
-    state.data = null;
-    state.note = err.status === 503 ? "Live query needs an API key; showing cached queries only." : err.message;
+    note = err.status === 503 ? "Live query needs an API key; showing cached queries only." : err.message;
   }
+  if (!settle()) return;
+  state.data = data;
+  state.note = note;
   state.loading = false;
   render(ctx);
 }
