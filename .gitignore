@@ -3,6 +3,7 @@ data/
 technical_assignment.pdf
 TODO.md
 docs/
+project-documentation/
 artifacts/
 __pycache__/
 *.egg-info/
