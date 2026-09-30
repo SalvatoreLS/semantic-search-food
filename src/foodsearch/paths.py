@@ -86,3 +86,7 @@ def embeddings_dir() -> Path:
 
 def run_meta_dir() -> Path:
     return runs_dir() / "meta"
+
+
+def assets_dir() -> Path:
+    return project_root() / "assets"

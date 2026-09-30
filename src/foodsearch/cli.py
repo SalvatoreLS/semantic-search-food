@@ -15,7 +15,7 @@ import uvicorn
 
 from foodsearch import paths
 from foodsearch.api.app import create_app
-from foodsearch.api.backend import DemoError
+from foodsearch.api.backend import DEMO_SYSTEMS, DemoError
 from foodsearch.data import build_items, load_items, load_queries, save_items
 from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
@@ -35,6 +35,8 @@ from foodsearch.systems import build_system, load_systems
 
 SERVE_HOST = "127.0.0.1"
 HEADLINE_SYSTEM = "hybrid"
+DECK_SYSTEMS = ("bm25", "dense_oai_large", "dense_pointwise", "main", "hybrid")
+DECK_LABELS = {"dense_oai_large": "Dense (S2)"}
 
 
 def _load_items() -> pd.DataFrame:
@@ -374,8 +376,10 @@ def _write_plots(costs: pd.DataFrame, out: Path, headline: str) -> None:
     summary = pd.read_csv(_require(out / "metrics.csv", "run `foodsearch eval` first"))
     ndcg = summary[summary["metric"] == "ndcg5"].sort_values("mean", ascending=False)
     mix = grade_mix(_load_runs(None), judge.load_qrels(paths.qrels_json()))
-    plots = out / "plots"
+    plots = paths.assets_dir()
     pareto_plot(summary, costs, plots / "quality_vs_cost.png")
+    labels = {system: label for system, label, _ in DEMO_SYSTEMS} | DECK_LABELS
+    pareto_plot(summary, costs, plots / "quality_vs_cost_deck.png", DECK_SYSTEMS, labels)
     grade_mix_plot(mix, ndcg["system"].tolist(), plots / "grade_mix_top5.png")
     table = pd.read_csv(out / "per_query.csv", dtype={"system": str, "query_id": str})
     delta_plot(table, headline, "bm25", plots / f"delta_{headline}_vs_bm25.png")

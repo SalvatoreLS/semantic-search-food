@@ -3,20 +3,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from foodsearch.eval import plots
 from foodsearch.eval.plots import (
     delta_plot,
-    frontier,
     grade_mix,
     grade_mix_plot,
     pareto_plot,
     spread,
 )
-
-
-def test_frontier_treats_near_equal_costs_as_ties() -> None:
-    cost = [0.0, 0.00002, 0.03, 0.14, 0.33]
-    quality = [0.6, 0.8, 0.88, 0.93, 0.91]
-    assert frontier(cost, quality) == [1, 2, 3]
 
 
 def test_spread_keeps_a_minimum_gap() -> None:
@@ -58,3 +52,28 @@ def test_delta_plot_renders(tmp_path: Path) -> None:
     )
     delta_plot(table, "a", "b", tmp_path / "delta.png")
     assert (tmp_path / "delta.png").stat().st_size > 0
+
+
+def test_pareto_plot_highlights_the_best_system_of_the_subset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    summary = pd.DataFrame(
+        {
+            "system": ["a", "b", "c"],
+            "metric": "ndcg5",
+            "mean": [0.6, 0.8, 0.95],
+            "lo": [0.5, 0.7, 0.9],
+            "hi": [0.7, 0.9, 1.0],
+        }
+    )
+    costs = pd.DataFrame({"system": ["a", "b", "c"], "usd_per_100_queries": [0.0, 0.1, 0.2]})
+    drawn: list[tuple[str, str]] = []
+    real = plots.Axes.annotate
+
+    def spy(self, text, *args, **kwargs):  # type: ignore[no-untyped-def]
+        drawn.append((text, kwargs["color"]))
+        return real(self, text, *args, **kwargs)
+
+    monkeypatch.setattr(plots.Axes, "annotate", spy)
+    plots.pareto_plot(summary, costs, tmp_path / "p.png", ["a", "b"], {"b": "Bee"})
+    assert drawn == [("a", plots.MUTED), ("Bee", plots.ACCENT)]

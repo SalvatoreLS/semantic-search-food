@@ -11,13 +11,13 @@ from foodsearch.eval.judge import Qrels
 from foodsearch.eval.pooling import ranked
 from foodsearch.runs import Run
 
-SURFACE = "#fcfcfb"
-TEXT = "#0b0b0b"
-MUTED = "#52514e"
-GRID = "#e4e3df"
-FRONTIER = "#2a78d6"
-DOMINATED = "#9a9993"
-GRADE_COLORS = ("#86b6ef", "#5598e7", "#256abf", "#104281")
+SURFACE = "#FFFFFF"
+TEXT = "#0B0F1A"
+MUTED = "#5B6475"
+GRID = "#E3E7EE"
+ACCENT = "#0332AF"
+OTHER = "#A3AAB8"
+GRADE_COLORS = ("#B42318", "#B07A00", "#5A8F00", "#0F7B4F")
 GRADE_LABELS = ("0 irrelevant", "1 partial", "2 good", "3 perfect")
 TOP = 5
 
@@ -33,16 +33,6 @@ def _style(ax: Axes) -> None:
     ax.set_axisbelow(True)
 
 
-def frontier(cost: Sequence[float], quality: Sequence[float], tie: float = 0.01) -> list[int]:
-    level = [round(c / tie) for c in cost]
-    best, keep = float("-inf"), []
-    for i in sorted(range(len(cost)), key=lambda j: (level[j], -quality[j])):
-        if quality[i] > best:
-            best = quality[i]
-            keep.append(i)
-    return keep
-
-
 def spread(values: Sequence[float], gap: float) -> list[float]:
     order = sorted(range(len(values)), key=lambda i: values[i])
     placed = list(values)
@@ -51,42 +41,50 @@ def spread(values: Sequence[float], gap: float) -> list[float]:
     return placed
 
 
-def pareto_plot(summary: pd.DataFrame, costs: pd.DataFrame, path: Path) -> None:
+def pareto_plot(
+    summary: pd.DataFrame,
+    costs: pd.DataFrame,
+    path: Path,
+    systems: Sequence[str] | None = None,
+    labels: Mapping[str, str] | None = None,
+) -> None:
     ndcg = summary[summary["metric"] == "ndcg5"].set_index("system")
-    data = costs.set_index("system").join(ndcg[["mean", "lo", "hi"]], how="inner").reset_index()
+    data = costs.set_index("system").join(ndcg[["mean", "lo", "hi"]], how="inner")
+    if systems is not None:
+        data = data.loc[[s for s in systems if s in data.index]]
+    data = data.reset_index()
     x, y = data["usd_per_100_queries"].tolist(), data["mean"].tolist()
-    on_front = set(frontier(x, y))
+    best = max(range(len(y)), key=lambda i: y[i])
+    names = [(labels or {}).get(s, s) for s in data["system"]]
     fig = Figure(figsize=(8, 5), dpi=200, facecolor=SURFACE)
     ax = fig.subplots()
     _style(ax)
     for i, row in data.iterrows():
-        color = FRONTIER if i in on_front else DOMINATED
         ax.errorbar(
             row["usd_per_100_queries"],
             row["mean"],
             yerr=[[row["mean"] - row["lo"]], [row["hi"] - row["mean"]]],
             fmt="o",
-            color=color,
-            markersize=6,
+            color=ACCENT if i == best else OTHER,
+            markersize=9 if i == best else 6,
             elinewidth=1,
             capsize=0,
             markeredgecolor=SURFACE,
             markeredgewidth=1.5,
-            zorder=3,
+            zorder=4 if i == best else 3,
         )
-    front = sorted(on_front, key=lambda i: x[i])
-    ax.plot([x[i] for i in front], [y[i] for i in front], color=FRONTIER, linewidth=2, zorder=2)
     span = max(x) or 1.0
     label_y = spread(y, gap=0.018)
-    for i, name in enumerate(data["system"]):
+    for i, name in enumerate(names):
         ax.annotate(
             name,
             (x[i], y[i]),
             xytext=(x[i] + 0.02 * span, label_y[i]),
             textcoords="data",
             va="center",
-            fontsize=8.5,
-            color=TEXT if i in on_front else MUTED,
+            fontsize=9.5 if i == best else 8.5,
+            fontweight="bold" if i == best else "normal",
+            color=ACCENT if i == best else MUTED,
         )
     ax.set_xlim(-0.03 * span, 1.25 * span)
     ax.set_xlabel("LLM cost, $ per 100 queries (cold cache)", color=MUTED, fontsize=9)
@@ -150,8 +148,8 @@ def grade_mix_plot(mix: pd.DataFrame, order: Sequence[str], path: Path) -> None:
     fig.savefig(path, facecolor=SURFACE)
 
 
-GAIN = "#2a78d6"
-LOSS = "#e34948"
+GAIN = ACCENT
+LOSS = "#B42318"
 
 
 def delta_plot(table: pd.DataFrame, system: str, base: str, path: Path) -> None:
