@@ -1,9 +1,10 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from foodsearch.llm import LLMClient
 from foodsearch.pipeline import Pipeline
 from foodsearch.retrievers import BM25Retriever, DenseRetriever, Retriever
 
@@ -31,5 +32,11 @@ def build_system(name: str, config_path: Path) -> Retriever:
     systems = load_systems(config_path)
     if name not in systems:
         raise KeyError(f"Unknown system {name!r}; defined: {sorted(systems)}")
-    spec = systems[name]
-    return REGISTRY[spec["type"]](name=name, **(spec.get("params") or {}))
+    return build_from_spec(name, systems[name])
+
+
+def build_from_spec(name: str, spec: Mapping[str, Any], llm: LLMClient | None = None) -> Retriever:
+    params = dict(spec.get("params") or {})
+    if spec["type"] != "bm25" and llm is not None:
+        params["llm"] = llm
+    return REGISTRY[spec["type"]](name=name, **params)

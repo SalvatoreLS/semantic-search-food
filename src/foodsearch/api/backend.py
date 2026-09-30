@@ -47,7 +47,7 @@ from foodsearch.llm import (
 from foodsearch.pipeline import Pipeline, PipelineResult
 from foodsearch.retrievers import Retriever
 from foodsearch.runs import Run, load_run
-from foodsearch.systems import REGISTRY, load_systems
+from foodsearch.systems import build_from_spec, load_systems
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -239,11 +239,7 @@ class DemoBackend:
     def _retriever(self, system: str) -> Retriever:
         with self._lock:
             if system not in self._retrievers:
-                spec = self._spec(system)
-                params = dict(spec.get("params") or {})
-                if spec["type"] != "bm25" and self._llm is not None:
-                    params["llm"] = self._llm
-                retriever = REGISTRY[spec["type"]](name=system, **params)
+                retriever = build_from_spec(system, self._spec(system), self._llm)
                 retriever.fit(self.items)
                 self._retrievers[system] = retriever
             return self._retrievers[system]
