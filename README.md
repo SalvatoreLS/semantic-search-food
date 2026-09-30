@@ -30,7 +30,7 @@ cp .env.example .env            # add OPENAI_API_KEY
 python scripts/build_artifacts.py  # index, image cache, every system run, pool (skips what exists)
                                    # step by step: foodsearch index, python scripts/fetch_images.py, foodsearch run --system hybrid
 foodsearch eval                    # needs artifacts/qrels.json, see Evaluation methodology
-foodsearch report                  # ablation, cost/latency, failure tables and plots in reports/
+foodsearch report                  # ablation, cost/latency, failure tables in reports/, plots in assets/
 foodsearch export                  # results/final_top10.csv from the hybrid run
 foodsearch serve                   # http://127.0.0.1:8000, eval queries work without an API key
 ```
@@ -59,9 +59,9 @@ src/foodsearch/
   images.py                 item id to local image file, via the image manifest
   api/                      FastAPI demo backend: JSON API, local images, static frontend
   web/static/               demo frontend (no build step)
-assets/                     demo screenshots used in this README
+assets/                     diagrams (SVG), plots and demo screenshots
 results/final_top10.csv     required output: top 10 per query of the headline system (hybrid)
-reports/                    metric tables, ablations, cost/latency, failures, plots
+reports/                    metric tables, ablations, cost/latency, failures
 scripts/build_artifacts.py  one command from data/ to every artifact
 scripts/fetch_images.py     local image cache for the demo
 scripts/screenshots.py      demo screenshots with headless Chrome
@@ -71,27 +71,9 @@ tests/                      unit tests (no network)
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph Offline
-        A[items CSV] --> B[Parse and clean<br/>dedupe, build item doc]
-        B --> D[Embeddings]
-        B --> C[BM25 index]
-        B --> F[Food / non-food flag]
-    end
-    subgraph Online
-        Q[Query PT] --> U[LLM query understanding<br/>intent + dish expansion]
-        Q --> R2[Dense top-100<br/>raw + expanded query]
-        U --> R2
-        U --> R1[BM25 top-100<br/>expanded query, non-zero hits]
-        R2 --> H[Weighted RRF]
-        R1 --> H
-        F --> G[Intent-aware prior]
-        H --> G
-        G --> RR[LLM listwise rerank top-30]
-        RR --> K[Top-10]
-    end
-```
+![Offline indexing: catalog CSV, cleaning, item doc text, then embeddings, BM25 index and food flag](assets/diagram_offline.svg)
+
+![Hybrid pipeline: query understanding, dense and BM25 retrieval, weighted RRF, food prior, listwise rerank](assets/diagram_pipeline.svg)
 
 The headline system `hybrid` (S8). Dense retrieval uses text-embedding-3-large; query understanding and rerank use gpt-4.1-mini. RRF uses k = 60 with weights 1 (dense raw), 1 (dense expanded) and 0.5 (BM25), and the prior multiplies non-food scores by λ = 0.5 unless the query is a product search. All of these values were fixed before any judging. The local cross-encoder (S6) was tested and dropped, so it is not in the diagram.
 
@@ -151,24 +133,7 @@ Each decision follows the same format: decision, alternatives, why, evidence. Ev
 
 ## Evaluation methodology
 
-```mermaid
-sequenceDiagram
-    participant S as Systems
-    participant P as Pooling
-    participant J as Judge (gpt-4.1)
-    participant H as Human annotator
-    participant M as Metrics
-    S->>P: top-10 per query per system
-    P->>P: union + dedupe
-    P->>J: (query, item card) pairs, shuffled, system-blind
-    J-->>P: grade 0-3 + short reason
-    P->>H: stratified sample (18 queries)
-    H-->>P: blind human grades
-    P->>M: weighted kappa, confusion matrix
-    J->>M: qrels
-    S->>M: runs
-    M-->>M: nDCG@5/10, P@5, MRR, food-leak@5, bootstrap CIs
-```
+![Evaluation: pooled top 10, gpt-4.1 judge, human labels and kappa gate, freeze, qrels, metrics](assets/diagram_eval.svg)
 
 There is no ground truth, so relevance is defined before any system is tuned and measured the way TREC builds test collections: pool the systems' results, grade the pool, and check the grader against people.
 
@@ -186,7 +151,7 @@ foodsearch agreement --lang en                    # kappa table, confusion matri
 foodsearch freeze --lang en                       # artifacts/eval_freeze.json, write once
 foodsearch judge --subset all                     # frozen judge on the whole pool -> qrels
 foodsearch eval --against bm25 dense_pointwise    # reports/*.csv; --qrels human for the labelled subset
-foodsearch report                                 # ablation, cost/latency, rerank-gain, failure tables and plots
+foodsearch report                                 # ablation, cost/latency, rerank-gain, failure tables, plots in assets/
 foodsearch export                                 # results/final_top10.csv (hybrid)
 ```
 
@@ -250,9 +215,9 @@ Mean nDCG@5 per group (`reports/per_type.csv`, CIs there). `us_translated` is an
 
 ### Quality vs cost
 
-![nDCG@5 against $ per 100 queries, one point per system](reports/plots/quality_vs_cost.png)
+![nDCG@5 against $ per 100 queries, one point per system](assets/quality_vs_cost.png)
 
-Per-query gain of `hybrid` over BM25 (better on 95 of 100 queries, worse on 2, tied on 3): `reports/plots/delta_hybrid_vs_bm25.png`. Grade mix of the top 5 per system: `reports/plots/grade_mix_top5.png`.
+Per-query gain of `hybrid` over BM25 (better on 95 of 100 queries, worse on 2, tied on 3): `assets/delta_hybrid_vs_bm25.png`. Grade mix of the top 5 per system: `assets/grade_mix_top5.png`.
 
 ### Failure analysis
 
