@@ -31,10 +31,9 @@ from foodsearch.llm import LLMClient, default_client, load_cost_log
 from foodsearch.pipeline import Pipeline, PipelineResult
 from foodsearch.retrievers import Hit, Retriever
 from foodsearch.runs import Run, hits_to_run, load_run, save_run, top_k_table
-from foodsearch.systems import build_system, load_systems
+from foodsearch.systems import HEADLINE_SYSTEM, build_system, load_systems
 
 SERVE_HOST = "127.0.0.1"
-HEADLINE_SYSTEM = "hybrid"
 DECK_SYSTEMS = ("bm25", "dense_oai_large", "dense_pointwise", "main", "hybrid")
 DECK_LABELS = {"dense_oai_large": "Dense (S2)"}
 

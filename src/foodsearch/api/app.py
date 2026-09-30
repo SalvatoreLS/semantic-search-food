@@ -18,10 +18,9 @@ from foodsearch.api.schemas import (
 )
 from foodsearch.images import media_type
 from foodsearch.llm import LLMClient
+from foodsearch.systems import COMPARE_SYSTEM, HEADLINE_SYSTEM
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "static"
-DEFAULT_SYSTEM = "hybrid"
-COMPARE_SYSTEM = "dense_pointwise"
 API_PREFIXES = ("/api/", "/images/")
 
 
@@ -59,14 +58,14 @@ def create_app(
         return demo.queries_response()
 
     @app.get("/api/search", response_model=SearchResponse)
-    def search(q: str = Query(min_length=1), system: str = DEFAULT_SYSTEM) -> SearchResponse:
+    def search(q: str = Query(min_length=1), system: str = HEADLINE_SYSTEM) -> SearchResponse:
         return demo.search(q, system)
 
     @app.get("/api/compare", response_model=CompareResponse)
     def compare(
         q: str = Query(min_length=1),
         left: str = COMPARE_SYSTEM,
-        right: str = DEFAULT_SYSTEM,
+        right: str = HEADLINE_SYSTEM,
     ) -> CompareResponse:
         return demo.compare(q, left, right)
 

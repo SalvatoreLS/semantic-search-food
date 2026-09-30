@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from foodsearch import paths
+from foodsearch.systems import COMPARE_SYSTEM, HEADLINE_SYSTEM
 
 DEFAULT_QUERY = "Comida para piquenique no parque"
 CHROME_NAMES = (
@@ -23,8 +24,6 @@ CHROME_NAMES = (
 )
 SERVER_TIMEOUT_S = 120.0
 SERVE_CODE = "from foodsearch.cli import main; main()"
-HEADLINE = "hybrid"
-LEFT = "dense_pointwise"
 VIEW_HEIGHTS = {"search": 1480, "compare": 1280, "about": 1480}
 
 
@@ -42,9 +41,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def view_urls(base: str, query: str) -> dict[str, str]:
+    compare = {"q": query, "left": COMPARE_SYSTEM, "right": HEADLINE_SYSTEM}
     return {
-        "search": f"{base}/#search?{urlencode({'q': query, 'system': HEADLINE})}",
-        "compare": f"{base}/#compare?{urlencode({'q': query, 'left': LEFT, 'right': HEADLINE})}",
+        "search": f"{base}/#search?{urlencode({'q': query, 'system': HEADLINE_SYSTEM})}",
+        "compare": f"{base}/#compare?{urlencode(compare)}",
         "about": f"{base}/#about",
     }
 

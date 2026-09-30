@@ -9,6 +9,9 @@ from foodsearch.retrievers import BM25Retriever, DenseRetriever, Retriever
 
 RetrieverFactory = Callable[..., Retriever]
 
+HEADLINE_SYSTEM = "hybrid"
+COMPARE_SYSTEM = "dense_pointwise"
+
 REGISTRY: dict[str, RetrieverFactory] = {
     "bm25": BM25Retriever,
     "dense": DenseRetriever,
