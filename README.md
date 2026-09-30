@@ -299,7 +299,7 @@ The demo is a local FastAPI app with a static frontend. Images are served from a
 - Cormack, Clarke & Büttcher. *Reciprocal Rank Fusion outperforms Condorcet and individual rank learning methods*, SIGIR 2009.
 - Karpukhin et al. *Dense Passage Retrieval for Open-Domain QA*, EMNLP 2020. https://arxiv.org/abs/2004.04906
 - Wang et al. *Multilingual E5 Text Embeddings*, 2024. https://arxiv.org/abs/2402.05672
-- Chen et al. *BGE M3-Embedding*, 2024. https://arxiv.org/abs/2402.03216
+- Chen et al. *M3-Embedding: Multi-Linguality, Multi-Functionality, Multi-Granularity Text Embeddings Through Self-Knowledge Distillation* (BGE-M3), Findings of ACL 2024. https://arxiv.org/abs/2402.03216
 - Gao, Ma, Lin & Callan. *Precise Zero-Shot Dense Retrieval without Relevance Labels* (HyDE), ACL 2023. https://arxiv.org/abs/2212.10496
 - Wang, Yang & Wei. *Query2doc: Query Expansion with Large Language Models*, EMNLP 2023. https://arxiv.org/abs/2303.07678
 - Sun et al. *Is ChatGPT Good at Search? Investigating LLMs as Re-Ranking Agents* (RankGPT), EMNLP 2023. https://arxiv.org/abs/2304.09542
@@ -309,7 +309,7 @@ The demo is a local FastAPI app with a static frontend. Images are served from a
 - Thomas, Spielman, Craswell & Mitra. *Large language models can accurately predict searcher preferences*, SIGIR 2024. https://arxiv.org/abs/2309.10621
 - Upadhyay et al. *UMBRELA: UMbrela is the (Open-Source Reproduction of the) Bing RELevance Assessor*, 2024. https://arxiv.org/abs/2406.06519
 - Faggioli et al. *Perspectives on Large Language Models for Relevance Judgment*, ICTIR 2023. https://arxiv.org/abs/2304.09161
-- Cohen. *A coefficient of agreement for nominal scales*, 1960.
+- Cohen. *A coefficient of agreement for nominal scales*, Educational and Psychological Measurement, 1960; Cohen. *Weighted kappa*, Psychological Bulletin, 1968.
 - Sakai. *Evaluating evaluation metrics based on the bootstrap*, SIGIR 2006.
 - Smucker, Allan & Carterette. *A comparison of statistical significance tests for IR evaluation*, CIKM 2007.
 - Holm. *A simple sequentially rejective multiple test procedure*, Scandinavian Journal of Statistics, 1979.
