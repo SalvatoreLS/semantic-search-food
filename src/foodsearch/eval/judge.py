@@ -8,9 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
-import openai
 import pandas as pd
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from foodsearch.cards import item_card
 from foodsearch.eval.prompts import RUBRIC_VERSION, Lang, judge_messages
@@ -65,23 +64,16 @@ def judge_one(
     lang: Lang,
     sleep: Callable[[float], None] = time.sleep,
 ) -> Judgment:
-    error: Exception | None = None
-    for attempt in range(MAX_ATTEMPTS):
-        if attempt:
-            sleep(min(2.0**attempt, 30.0))
-        try:
-            parsed = client.chat_json(
-                model,
-                judge_messages(pair.query, pair.card, lang),
-                tag=f"judge:{model}:{lang}",
-                max_tokens=120,
-                cache_extra={"rubric_version": RUBRIC_VERSION, "prompt_lang": lang},
-                validate=Judgment.model_validate,
-            )
-            return Judgment.model_validate(parsed)
-        except (LLMResponseError, ValidationError, openai.APIError) as e:
-            error = e
-    raise LLMResponseError(f"judge failed after {MAX_ATTEMPTS} attempts: {error}") from error
+    return client.chat_checked(
+        model,
+        judge_messages(pair.query, pair.card, lang),
+        Judgment.model_validate,
+        tag=f"judge:{model}:{lang}",
+        attempts=MAX_ATTEMPTS,
+        max_tokens=120,
+        cache_extra={"rubric_version": RUBRIC_VERSION, "prompt_lang": lang},
+        sleep=sleep,
+    )
 
 
 def judge_pairs(

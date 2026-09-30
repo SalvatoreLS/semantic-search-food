@@ -240,11 +240,12 @@ class LLMClient:
         attempts: int = 3,
         max_tokens: int | None = None,
         cache_extra: dict[str, Any] | None = None,
+        sleep: Callable[[float], None] | None = None,
     ) -> T:
         error: Exception | None = None
         for attempt in range(attempts):
             if attempt:
-                time.sleep(min(2.0**attempt, 30.0))
+                (sleep or time.sleep)(min(2.0**attempt, 30.0))
             try:
                 parsed = self.chat_json(
                     model,
