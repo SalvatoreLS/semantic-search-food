@@ -435,8 +435,13 @@ class DemoBackend:
         table = self._files.get(paths.reports_dir() / "metrics.csv", pd.read_csv)
         if table is None:
             return []
+        labels = {sid: label for sid, label, _ in DEMO_SYSTEMS}
+        order = {sid: i for i, sid in enumerate(self.systems)}
+        groups = sorted(
+            table.groupby("system", sort=False), key=lambda g: order.get(str(g[0]), len(order))
+        )
         rows = []
-        for system, sub in table.groupby("system", sort=False):
+        for system, sub in groups:
             by_metric = sub.set_index("metric")
             values: dict[str, list[float | None] | None] = {}
             for metric in QUERY_METRICS:
@@ -444,5 +449,13 @@ class DemoBackend:
                     values[metric] = None
                 else:
                     values[metric] = [_clean(by_metric.at[metric, c]) for c in ("mean", "lo", "hi")]
-            rows.append(SummaryRow(system=str(system), **values))
+            sid = str(system)
+            rows.append(
+                SummaryRow(
+                    system=sid,
+                    label=labels.get(sid, sid),
+                    desc=self.systems.get(sid, {}).get("description", ""),
+                    **values,
+                )
+            )
         return rows

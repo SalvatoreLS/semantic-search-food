@@ -198,6 +198,7 @@ def test_metrics_and_summary_read_reports_when_present(make_client: Any) -> None
         [
             {"system": "main", "metric": "ndcg5", "mean": 0.9, "lo": 0.8, "hi": 0.95},
             {"system": "main", "metric": "p5", "mean": 0.8, "lo": 0.7, "hi": 0.9},
+            {"system": "bm25", "metric": "ndcg5", "mean": 0.5, "lo": 0.4, "hi": 0.6},
         ]
     ).to_csv(reports / "metrics.csv", index=False)
     client = make_client()
@@ -206,12 +207,23 @@ def test_metrics_and_summary_read_reports_when_present(make_client: Any) -> None
     summary = client.get("/api/summary").json()
     assert summary["rows"] == [
         {
+            "system": "bm25",
+            "label": "BM25",
+            "desc": SYSTEMS["bm25"]["description"],
+            "ndcg5": [0.5, 0.4, 0.6],
+            "ndcg10": None,
+            "p5": None,
+            "food_leak5": None,
+        },
+        {
             "system": "main",
+            "label": "Listwise (S7)",
+            "desc": SYSTEMS["main"]["description"],
             "ndcg5": [0.9, 0.8, 0.95],
             "ndcg10": None,
             "p5": [0.8, 0.7, 0.9],
             "food_leak5": None,
-        }
+        },
     ]
 
 

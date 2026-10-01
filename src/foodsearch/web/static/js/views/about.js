@@ -12,21 +12,20 @@ function chain(boxes) {
   return boxes.join(`<span class="fs-arrow">${icon("arrow")}</span>`);
 }
 
-function table(ctx, s) {
+function table(s) {
   const best = {};
   KEYS.forEach(([k, lower]) => {
     const vals = s.rows.map((r) => r[k]?.[0]).filter((v) => v != null);
     best[k] = lower ? Math.min(...vals) : Math.max(...vals);
   });
   const rows = s.rows.map((r) => {
-    const info = ctx.systems.find((x) => x.id === r.system) || { label: r.system, desc: "" };
     const cells = KEYS.map(([k]) => {
       const v = r[k];
       if (!v) return `<td>${MISSING}</td>`;
       const ci = v[1] == null || v[2] == null ? "" : `<span class="fs-ci">[${v[1].toFixed(2)}, ${v[2].toFixed(2)}]</span>`;
       return `<td><span class="${v[0] === best[k] ? "fs-best" : ""}">${v[0].toFixed(2)}</span>${ci}</td>`;
     }).join("");
-    return `<tr><td><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">${esc(info.label)}</span><span class="fs-meta" style="font-weight: 400">${esc(info.desc)}</span></span></td>${cells}</tr>`;
+    return `<tr><td><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">${esc(r.label)}</span><span class="fs-meta" style="font-weight: 400">${esc(r.desc)}</span></span></td>${cells}</tr>`;
   }).join("") || `<tr><td colspan="5"><span class="fs-meta">No metrics yet: they appear after <code>foodsearch judge --subset all</code> and <code>foodsearch eval</code>.</span></td></tr>`;
   return `<table class="fs-table"><thead><tr><th scope="col">System</th><th scope="col">nDCG@5</th><th scope="col">nDCG@10</th><th scope="col">P@5</th><th scope="col">food-leak@5 ↓</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -56,7 +55,7 @@ export async function render(ctx) {
 <span class="fs-meta">Judge grades 0–3 · nDCG uses graded gains</span>
 </div>
 <div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: start">
-<section style="grid-column: span 8; border: 1px solid var(--border); border-radius: 12px; overflow: hidden" aria-label="Systems by metric">${table(ctx, s)}</section>
+<section style="grid-column: span 8; border: 1px solid var(--border); border-radius: 12px; overflow: hidden" aria-label="Systems by metric">${table(s)}</section>
 <aside style="grid-column: span 4; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
 ${stat("Total LLM cost", s.cost_usd == null ? MISSING : `$${s.cost_usd.toFixed(2)}`, "whole project")}
 ${stat("Judge vs human", kappa, `weighted, ${judge.model || MISSING}`)}

@@ -24,7 +24,7 @@ CHROME_NAMES = (
 )
 SERVER_TIMEOUT_S = 120.0
 SERVE_CODE = "from foodsearch.cli import main; main()"
-VIEW_HEIGHTS = {"search": 1480, "compare": 1280, "about": 1480}
+VIEW_HEIGHTS = {"search": 1480, "compare": 1280, "about": 1560}
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:

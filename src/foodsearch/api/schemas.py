@@ -119,6 +119,8 @@ class LabelIn(BaseModel):
 
 class SummaryRow(BaseModel):
     system: str
+    label: str
+    desc: str
     ndcg5: Interval | None
     ndcg10: Interval | None
     p5: Interval | None
