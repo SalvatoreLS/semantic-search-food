@@ -3,9 +3,6 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
-from ranx import Qrels as RanxQrels
-from ranx import Run as RanxRun
-from ranx import evaluate
 
 from foodsearch.eval.judge import Qrels
 from foodsearch.eval.pooling import ranked
@@ -26,6 +23,10 @@ PRODUCT_TYPE = "product"
 
 
 def _ranx_scores(run: Run, qrels: Qrels) -> dict[str, np.ndarray]:
+    from ranx import Qrels as RanxQrels
+    from ranx import Run as RanxRun
+    from ranx import evaluate
+
     ordered = {
         qid: {iid: float(DEPTH - r) for r, iid in enumerate(ranked(run.get(qid, {}), DEPTH))}
         for qid in qrels

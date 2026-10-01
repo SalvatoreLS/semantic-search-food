@@ -11,8 +11,10 @@ from foodsearch.api.backend import NotFoundError
 
 def test_serve_binds_localhost_on_the_given_port(monkeypatch: pytest.MonkeyPatch) -> None:
     served: dict[str, Any] = {}
-    monkeypatch.setattr(cli, "create_app", lambda config: served.setdefault("config", config))
-    monkeypatch.setattr(cli.uvicorn, "run", lambda app, **kwargs: served.update(kwargs))
+    monkeypatch.setattr(
+        "foodsearch.api.app.create_app", lambda config: served.setdefault("config", config)
+    )
+    monkeypatch.setattr("uvicorn.run", lambda app, **kwargs: served.update(kwargs))
     monkeypatch.setattr(cli, "port_is_free", lambda port: True)
     cli.main(["serve", "--port", "8123", "--config", "custom.yaml"])
     assert served == {"config": Path("custom.yaml"), "host": "127.0.0.1", "port": 8123}
@@ -24,7 +26,7 @@ def test_serve_exits_with_a_hint_when_artifacts_are_missing(
     def missing(config: Path) -> None:
         raise NotFoundError("items.parquet not found; run `python scripts/build_artifacts.py`")
 
-    monkeypatch.setattr(cli, "create_app", missing)
+    monkeypatch.setattr("foodsearch.api.app.create_app", missing)
     with pytest.raises(SystemExit, match="build_artifacts"):
         cli.main(["serve"])
 
@@ -46,8 +48,8 @@ def serve_on_busy_port(
     monkeypatch: pytest.MonkeyPatch, busy_port: int, answer: str, tty: bool = True
 ) -> dict[str, Any]:
     served: dict[str, Any] = {}
-    monkeypatch.setattr(cli, "create_app", lambda config: object())
-    monkeypatch.setattr(cli.uvicorn, "run", lambda app, **kwargs: served.update(kwargs))
+    monkeypatch.setattr("foodsearch.api.app.create_app", lambda config: object())
+    monkeypatch.setattr("uvicorn.run", lambda app, **kwargs: served.update(kwargs))
     monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: tty)
     monkeypatch.setattr("builtins.input", lambda prompt: answer)
     cli.main(["serve", "--port", str(busy_port)])

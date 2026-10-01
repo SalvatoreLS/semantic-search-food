@@ -1,8 +1,6 @@
 import os
 from typing import Literal
 
-import torch
-
 Device = Literal["cuda", "mps", "cpu"]
 
 DEVICE_ENV_VAR = "FOODSEARCH_DEVICE"
@@ -10,6 +8,8 @@ _DEVICES: tuple[Device, ...] = ("cuda", "mps", "cpu")
 
 
 def is_available(device: Device) -> bool:
+    import torch
+
     if device == "cuda":
         return torch.cuda.is_available()
     if device == "mps":

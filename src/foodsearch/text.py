@@ -1,16 +1,20 @@
 import re
 import unicodedata
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
-import nltk
-from nltk.stem import SnowballStemmer
 from unidecode import unidecode
+
+if TYPE_CHECKING:
+    from nltk.stem import SnowballStemmer
 
 _WORD = re.compile(r"\w+")
 
 
 @lru_cache(maxsize=1)
 def _stopwords() -> frozenset[str]:
+    import nltk
+
     try:
         words = nltk.corpus.stopwords.words("portuguese")
     except LookupError:
@@ -20,7 +24,9 @@ def _stopwords() -> frozenset[str]:
 
 
 @lru_cache(maxsize=1)
-def _stemmer() -> SnowballStemmer:
+def _stemmer() -> "SnowballStemmer":
+    from nltk.stem import SnowballStemmer
+
     return SnowballStemmer("portuguese")
 
 

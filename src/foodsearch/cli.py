@@ -11,11 +11,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import uvicorn
 
 from foodsearch import paths
-from foodsearch.api.app import create_app
-from foodsearch.api.backend import DEMO_SYSTEMS, DemoError
 from foodsearch.data import build_items, load_items, load_queries, save_items
 from foodsearch.device import resolve_device
 from foodsearch.eval import human, judge, metrics
@@ -24,7 +21,6 @@ from foodsearch.eval.agreement import agreement, intra_agreement
 from foodsearch.eval.cost import cost_table
 from foodsearch.eval.failures import failure_table
 from foodsearch.eval.freeze import check_prompt_unchanged, load_freeze, write_freeze
-from foodsearch.eval.plots import delta_plot, grade_mix, grade_mix_plot, pareto_plot
 from foodsearch.eval.pooling import build_pool, load_pool, save_pool
 from foodsearch.eval.prompts import LANGS
 from foodsearch.llm import JUDGE_MODEL, LLMClient, default_client, load_cost_log
@@ -372,6 +368,9 @@ def _write_failures(out: Path, headline: str) -> None:
 
 
 def _write_plots(costs: pd.DataFrame, out: Path, headline: str) -> None:
+    from foodsearch.api.backend import DEMO_SYSTEMS
+    from foodsearch.eval.plots import delta_plot, grade_mix, grade_mix_plot, pareto_plot
+
     summary = pd.read_csv(_require(out / "metrics.csv", "run `foodsearch eval` first"))
     ndcg = summary[summary["metric"] == "ndcg5"].sort_values("mean", ascending=False)
     mix = grade_mix(_load_runs(None), judge.load_qrels(paths.qrels_json()))
@@ -431,6 +430,11 @@ def resolve_serve_port(port: int) -> int:
 
 
 def cmd_serve(args: argparse.Namespace) -> None:
+    import uvicorn
+
+    from foodsearch.api.app import create_app
+    from foodsearch.api.backend import DemoError
+
     try:
         app = create_app(config=args.config)
     except DemoError as e:
