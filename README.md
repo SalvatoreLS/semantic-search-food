@@ -69,6 +69,8 @@ notebooks/                  data exploration notebook
 tests/                      unit tests (no network)
 ```
 
+`results/final_top10.csv` has the columns `query_id, rank, itemId, score, system`. For `hybrid` the `score` comes from the rank after the listwise rerank, (n − i) / n over the n fused candidates of a query. It orders items within a query, but it is not a calibrated relevance score and should not be compared across queries.
+
 ## Architecture
 
 ![Offline indexing: catalog CSV, cleaning, item doc text, then embeddings, BM25 index and food flag](assets/diagram_offline.svg)
