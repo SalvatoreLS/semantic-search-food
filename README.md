@@ -59,7 +59,7 @@ src/foodsearch/
   images.py                 item id to local image file, via the image manifest
   api/                      FastAPI demo backend: JSON API, local images, static frontend
   web/static/               demo frontend (no build step)
-assets/                     diagrams (SVG), plots, demo screenshots, and figures for the deck and report
+assets/                     diagrams (SVG), plots, the About screenshot, and figures for the deck and report
 results/final_top10.csv     required output: top 10 per query of the headline system (hybrid)
 reports/                    metric tables, ablations, cost/latency, failures
 scripts/build_artifacts.py  one command from data/ to every artifact
@@ -228,10 +228,10 @@ Per-query gain of `hybrid` over BM25 (better on 95 of 100 queries, worse on 2, t
 
 The 10 worst `hybrid` queries by nDCG@5 (`reports/failures.csv`), tagged by reading each top 5 next to the grade-3 items it missed. The worst still scores 0.65.
 
-| Cause | Queries | Example |
+| Cause | Queries | What happens |
 |-------|---------|---------|
 | Catalog gap or near gap | 4 | the dish asked for is absent or nearly absent from the catalog |
-| Near miss on a fuzzy style (top 5 all relevant, better items lower) | 4 | the top 5 is all relevant, but items graded 3 sit at ranks 6 to 10 |
+| Near miss on a fuzzy style | 4 | the top 5 is all relevant, but items graded 3 sit at ranks 6 to 10 |
 | Query understanding miss | 1 | the dish expansion picks one regional dish while the best items are of another kind |
 | Grocery ranked above ready dishes | 1 | a packaged ingredient ranks above the ready-to-eat dish |
 
@@ -269,15 +269,13 @@ No failure is a non-food leak (food-leak@5 = 0 on all ten), none is caused by th
 
 ## Demo
 
-![Search view: query understanding, pipeline trace, per-query metrics and the top 10 of the hybrid system](assets/demo_search.png)
+![About view: metrics of every system with 95% CIs, judge agreement, total cost and the hybrid architecture](assets/demo_about.png)
 
-*Search: the hybrid system on an eval query, with the LLM intent and dish expansion, the judge grade of each result and its rank in the raw and expanded dense lists before fusion.*
+*About: nDCG@5, nDCG@10, P@5 and food-leak@5 with 95% CIs for all 11 systems, judge-vs-human κ, pairs judged and total LLM cost.*
 
-![Compare view: pointwise (S9) and hybrid (S8) side by side with overlap markers](assets/demo_compare.png)
+The demo has four views. **Search** runs one system on a query and shows the LLM intent and dish expansion, the per-stage trace (time and cost), the judge grade of each result and its rank in every list before fusion and rerank. **Compare** puts two systems side by side with their metrics and marks the items both lists share. **Label** is the blind grading view used for the human labels, and **About** is shown above. Search and Compare screenshots are not included because they show catalog items, and the dataset is confidential.
 
-*Compare: the same query on Pointwise (S9) and Hybrid (S8), with per-system metrics and which items both lists share.*
-
-The demo is a local FastAPI app with a static frontend. Images are served from a local cache built once by `scripts/fetch_images.py`, so the demo never loads remote images at view time. Items without an image get a placeholder tile. To run the demo on another machine, copy the `artifacts/` folder (no network or API key needed for the 100 eval queries) or rebuild it with `python scripts/build_artifacts.py`. The views take deep links (`#search?q=...&system=hybrid`, `#compare?q=...&left=dense_pointwise&right=hybrid`), and `python scripts/screenshots.py` uses them to regenerate the screenshots above with headless Chrome.
+The demo is a local FastAPI app with a static frontend. Images are served from a local cache built once by `scripts/fetch_images.py`, so the demo never loads remote images at view time. Items without an image get a placeholder tile. To run the demo on another machine, copy the `artifacts/` folder (no network or API key needed for the 100 eval queries) or rebuild it with `python scripts/build_artifacts.py`. The views take deep links (`#search?q=...&system=hybrid`, `#compare?q=...&left=dense_pointwise&right=hybrid`), and `python scripts/screenshots.py` uses them to capture Search, Compare and About with headless Chrome into `artifacts/screenshots/`.
 
 ## Assumptions and limitations
 
