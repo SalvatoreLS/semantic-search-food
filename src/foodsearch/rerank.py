@@ -18,6 +18,8 @@ from foodsearch.retrievers.base import Hit
 
 @dataclass(frozen=True, slots=True)
 class PriorTrace:
+    """Whether the food prior was applied, with which lambda and why, for the demo trace."""
+
     on: bool
     lam: float
     reason: str
@@ -26,6 +28,13 @@ class PriorTrace:
 def food_prior(
     hits: Sequence[Hit], is_food: Mapping[str, bool], lam: float, intent: str | None
 ) -> tuple[list[Hit], PriorTrace]:
+    """Stage 4: the intent-aware food prior.
+
+    For food queries the score of every non-food item is multiplied by `lam` (0.5 in the configs),
+    so a shampoo can still appear but sinks below comparable dishes. Nothing is ever filtered out,
+    and product searches (a cleaning product, a medicine) get no penalty at all. Items with an unknown
+    flag count as food.
+    """
     if intent == "product":
         return list(hits), PriorTrace(False, lam, "product intent: no penalty")
     scored = [
@@ -38,23 +47,36 @@ def food_prior(
 
 
 def rank_scores(order: Sequence[str], source: str) -> list[Hit]:
+    """Turn a final order into scores (n - i) / n, from 1.0 down. A reranker returns an order rather
+    than comparable scores, so these rank-based values are what the runs and results/final_top10.csv
+    store for reranked systems.
+    """
     n = len(order)
     return [Hit(item_id, (n - i) / n, source) for i, item_id in enumerate(order)]
 
 
 def apply_order(hits: Sequence[Hit], head: Sequence[str], source: str) -> list[Hit]:
+    """Put the reranked head first and keep every other candidate after it in its previous order, so
+    the full list survives a rerank of only the top few.
+    """
     placed = set(head)
     return rank_scores([*head, *(h.item_id for h in hits if h.item_id not in placed)], source)
 
 
 @dataclass(frozen=True, slots=True)
 class RerankResult:
+    """The new order of the reranked head, plus how many LLM calls were made and how many failed,
+    for the stage trace.
+    """
+
     order: list[str]
     llm_calls: int
     failures: int
 
 
 class Reranker(Protocol):
+    """Stage 5 interface: reorder the top `depth` hits of a query using the item cards."""
+
     label: str
     model: str
     depth: int
@@ -78,6 +100,11 @@ class ListwiseRanking(BaseModel):
 
 
 class ListwiseReranker:
+    """Stage 5 of `main` (S7) and `hybrid` (S8): one gpt-4.1-mini call sees the top 30 item cards
+    together and returns the best 10 in order. Seeing all candidates at once lets the model compare
+    them, which a pointwise score cannot do.
+    """
+
     label = "listwise rerank"
 
     def __init__(
@@ -93,6 +120,7 @@ class ListwiseReranker:
         self._llm = llm
 
     def messages(self, query: str, candidates: Sequence[str]) -> list[dict[str, str]]:
+        """The prompt: ranking instructions, then the query and the numbered candidate cards."""
         listing = "\n\n".join(f"[{i}]\n{card}" for i, card in enumerate(candidates, start=1))
         return [
             {
@@ -103,6 +131,10 @@ class ListwiseReranker:
         ]
 
     def _parser(self, n: int, top: int) -> Any:
+        """Build the check for the model's answer: distinct candidate numbers between 1 and `n`, cut
+        to the first `top`. An answer that fails it is retried, never cached.
+        """
+
         def parse(payload: dict[str, Any]) -> list[int]:
             ranking = ListwiseRanking.model_validate(payload).ranking
             if len(set(ranking)) != len(ranking) or not all(1 <= i <= n for i in ranking):
@@ -112,6 +144,10 @@ class ListwiseReranker:
         return parse
 
     def rerank(self, query: str, hits: Sequence[Hit], cards: Mapping[str, str]) -> RerankResult:
+        """Rerank the head of the list in one call. The chosen items come first, the rest of the
+        head follows in its old order. If the call keeps failing, the pre-rerank order is kept and
+        one failure is counted, so a search never breaks because of the reranker.
+        """
         head = [h.item_id for h in hits[: self.depth]]
         if not head:
             return RerankResult([], 0, 0)
@@ -141,6 +177,11 @@ class PointwiseScore(BaseModel):
 
 
 class PointwiseReranker:
+    """Stage 5 of S9 `dense_pointwise`, the design the listwise systems are compared against:
+    gpt-4.1-mini scores each of the top 50 items from 0 to 10, one call per item, without seeing the
+    other candidates.
+    """
+
     label = "pointwise rerank"
 
     def __init__(
@@ -156,12 +197,14 @@ class PointwiseReranker:
         self._llm = llm
 
     def messages(self, query: str, card: str) -> list[dict[str, str]]:
+        """The prompt: the 0-10 scale, then the query and a single item card."""
         return [
             {"role": "system", "content": POINTWISE_PROMPT},
             {"role": "user", "content": f"Query: {query}\n\nProduct:\n{card}"},
         ]
 
     def _score(self, query: str, card: str) -> int | None:
+        """Score one item, or None if every attempt failed."""
         try:
             return (self._llm or default_client()).chat_checked(
                 self.model,
@@ -174,6 +217,9 @@ class PointwiseReranker:
             return None
 
     def rerank(self, query: str, hits: Sequence[Hit], cards: Mapping[str, str]) -> RerankResult:
+        """Score the head in parallel threads and sort by score, keeping the earlier order to break
+        ties. Items whose call failed go last instead of stopping the search.
+        """
         head = [h.item_id for h in hits[: self.depth]]
         with ThreadPoolExecutor(self.workers) as pool:
             scores = list(pool.map(lambda i: self._score(query, cards[i]), head))
@@ -183,6 +229,10 @@ class PointwiseReranker:
 
 
 class CrossEncoderReranker:
+    """Stage 5 of S6: the local multilingual cross-encoder bge-reranker-v2-m3 on the top 30. It was
+    tested as a cheaper alternative to the LLM rerank and dropped, because it lowered nDCG@5.
+    """
+
     label = "cross-encoder rerank"
 
     def __init__(
@@ -194,6 +244,7 @@ class CrossEncoderReranker:
         self._model: Any = None
 
     def _load(self) -> Any:
+        """Load the model on first use, on the runtime device, in half precision on CUDA."""
         if self._model is None:
             from sentence_transformers import CrossEncoder
 
@@ -204,6 +255,7 @@ class CrossEncoderReranker:
         return self._model
 
     def rerank(self, query: str, hits: Sequence[Hit], cards: Mapping[str, str]) -> RerankResult:
+        """Score every (query, card) pair of the head and sort by score."""
         head = [h.item_id for h in hits[: self.depth]]
         if not head:
             return RerankResult([], 0, 0)
@@ -222,6 +274,9 @@ RERANKERS: dict[str, type] = {
 
 
 def build_reranker(spec: Mapping[str, Any], llm: LLMClient | None) -> Reranker:
+    """Build the reranker from its systems.yaml spec. It refuses the judge model, so the system is
+    never graded by the same model that ranked it.
+    """
     params = dict(spec)
     kind = params.pop("type")
     if kind not in RERANKERS:

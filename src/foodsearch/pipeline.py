@@ -19,6 +19,11 @@ Understanding = Literal["none", "rule", "llm"]
 
 @dataclass(frozen=True, slots=True)
 class StageTrace:
+    """What one pipeline stage did: its model, a short detail, time, cost, LLM calls and failures.
+    The demo shows these, and `foodsearch run` stores them in the run meta, where the cost and
+    latency report reads them.
+    """
+
     name: str
     model: str | None
     detail: str | None
@@ -30,6 +35,11 @@ class StageTrace:
 
 @dataclass
 class PipelineResult:
+    """The final hits plus everything needed to explain them: the intent, the dish expansion, the
+    food prior decision, one trace per stage, and the rank each item had in every list before fusion
+    and rerank.
+    """
+
     hits: list[Hit]
     intent: str | None = None
     understanding: QueryUnderstanding | None = None
@@ -39,6 +49,10 @@ class PipelineResult:
 
 
 class _Stage:
+    """Context manager around one stage: it measures the wall time and, when an LLM client is given,
+    the dollars spent inside the block.
+    """
+
     def __init__(self, llm: LLMClient | None) -> None:
         self._llm = llm
 
@@ -59,10 +73,21 @@ class _Stage:
         llm_calls: int = 0,
         failures: int = 0,
     ) -> StageTrace:
+        """Package the measured time and cost with the stage's name and details."""
         return StageTrace(name, model, detail, round(self.ms, 1), self.cost, llm_calls, failures)
 
 
 class Pipeline:
+    """The configurable search pipeline behind systems S4 to S9 in configs/systems.yaml.
+
+    The headline system `hybrid` (S8) runs every stage: (1) query understanding, where gpt-4.1-mini
+    returns the intent and a list of concrete Brazilian dishes; (2) dense retrieval on the raw and
+    on the expanded query, plus BM25 on the expanded query; (3) weighted reciprocal rank fusion of
+    those lists; (4) a soft food prior that pushes non-food items down for food queries; (5) an LLM
+    listwise rerank of the top 30. Simpler systems switch stages off in their config, which is how
+    the ablations are built.
+    """
+
     def __init__(
         self,
         name: str,
@@ -76,6 +101,9 @@ class Pipeline:
         candidates: int = 100,
         llm: LLMClient | None = None,
     ) -> None:
+        """Build the stages from the params of one systems.yaml entry. Query expansion needs LLM
+        understanding, because the expanded text is the LLM's dish list.
+        """
         if expand and understanding != "llm":
             raise ValueError("query expansion needs understanding: llm")
         self.name = name
@@ -93,9 +121,14 @@ class Pipeline:
 
     @property
     def llm(self) -> LLMClient:
+        """The client given at construction, or the shared default one."""
         return self._llm or default_client()
 
     def fit(self, items: pd.DataFrame) -> None:
+        """Index the catalog: document embeddings for dense retrieval, the BM25 index when this
+        system uses it, the food flag of every item for the prior, and the item cards the reranker
+        reads.
+        """
         self.dense.fit(items)
         if self.bm25 is not None:
             self.bm25.fit(items)
@@ -105,9 +138,16 @@ class Pipeline:
             self._cards = {item_id: item_card(row) for item_id, row in rows.iterrows()}
 
     def search(self, query: str, k: int = 100) -> list[Hit]:
+        """The plain Retriever interface: the hits of search_detailed without the trace, so
+        evaluation code can treat a pipeline like any other retriever.
+        """
         return self.search_detailed(query, k).hits
 
     def _understand(self, query: str, result: PipelineResult) -> None:
+        """Stage 1: decide the query intent. The rule variant only spots non-food product words; the
+        LLM variant also returns the dish list used for expansion. If the LLM call fails, the search
+        still runs on the raw query and the trace records the failure.
+        """
         if self.understanding == "rule":
             with _Stage(None) as stage:
                 result.intent = rule_intent(query)
@@ -126,6 +166,11 @@ class Pipeline:
             )
 
     def _retrieve(self, query: str, result: PipelineResult) -> dict[str, list[Hit]]:
+        """Stage 2: build the candidate lists. Dense retrieval always runs on the raw query, and
+        with expansion also on the query plus the LLM's dishes; keeping the raw list guards against
+        an expansion that over-specifies. BM25, when configured, runs on the expanded text, where
+        exact dish names give it something to match.
+        """
         expanded = (
             result.understanding.expanded_text(query)
             if self.expand and result.understanding is not None
@@ -147,6 +192,13 @@ class Pipeline:
         return lists
 
     def search_detailed(self, query: str, k: int = 100) -> PipelineResult:
+        """Run the whole pipeline on one query and keep a trace of every stage.
+
+        Understanding and retrieval come first. Then stage 3 merges the lists with weighted RRF,
+        stage 4 rescales scores with the food prior, and stage 5 reorders the head with the
+        reranker. The result carries the top `k` hits plus the per-stage trace and each item's
+        rank in every list, which is what the demo's Search view displays.
+        """
         result = PipelineResult(hits=[])
         self._understand(query, result)
         lists = self._retrieve(query, result)
