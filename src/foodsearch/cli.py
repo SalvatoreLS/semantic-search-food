@@ -386,7 +386,7 @@ def _write_plots(costs: pd.DataFrame, out: Path, headline: str) -> None:
 
 def cmd_export(args: argparse.Namespace) -> None:
     run = load_run(_require(paths.runs_dir() / f"{args.system}.json", "run the system first"))
-    table = top_k_table(run, args.system, args.k)
+    table = top_k_table(run, args.system, args.k).round({"score": 6})
     out = paths.results_dir() / "final_top10.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(out, index=False)
