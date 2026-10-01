@@ -1,3 +1,11 @@
+"""Item cards: the single text view of a catalog item.
+
+The LLM judge, the human Label view and the LLM rerankers all read the same card: name, category
+path, cleaned description, price and attributes. Graders and rerankers therefore see exactly the
+same evidence, which keeps the judge-vs-human agreement check fair and keeps the reranker from using
+information the judge cannot see.
+"""
+
 from typing import Any
 
 import pandas as pd
