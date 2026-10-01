@@ -72,7 +72,7 @@ requirements.lock.txt       exact versions tested on Linux, Python 3.11
 .github/workflows/ci.yml    CI: ruff and pytest on every push and pull request
 ```
 
-`results/final_top10.csv` has the columns `query_id, rank, itemId, score, system`. For `hybrid` the `score` comes from the rank after the listwise rerank, (n − i) / n over the n fused candidates of a query. It orders items within a query, but it is not a calibrated relevance score and should not be compared across queries.
+`results/final_top10.csv` has the columns `query_id, rank, itemId, score, system`. For `hybrid` the `score` comes from the rank after the listwise rerank, (n − i) / n over the n fused candidates of a query, rounded to 6 decimals. It orders items within a query, but it is not a calibrated relevance score and should not be compared across queries.
 
 ## Architecture
 
@@ -202,9 +202,9 @@ Mean nDCG@5 per group (`reports/per_type.csv`, CIs there). `us_translated` is an
 
 | Rerank step | Δ nDCG@5, judge qrels (95% CI) | Δ nDCG@5, human qrels (95% CI) |
 |-------------|-------------------------------|-------------------------------|
-| LLM listwise rerank (`main` vs `qu_fusion`) | -0.022 [-0.126, +0.079] | -0.016 [-0.113, +0.070] |
-| bge cross-encoder rerank (`qu_fusion_ce` vs `qu_fusion`) | -0.063 [-0.175, +0.045] | -0.076 [-0.184, +0.030] |
-| LLM pointwise rerank (`dense_pointwise` vs `dense_oai_large`) | -0.006 [-0.080, +0.064] | +0.004 [-0.057, +0.062] |
+| LLM listwise rerank (`main` vs `qu_fusion`) | −0.022 [−0.126, +0.079] | −0.016 [−0.113, +0.070] |
+| bge cross-encoder rerank (`qu_fusion_ce` vs `qu_fusion`) | −0.063 [−0.175, +0.045] | −0.076 [−0.184, +0.030] |
+| LLM pointwise rerank (`dense_pointwise` vs `dense_oai_large`) | −0.006 [−0.080, +0.064] | +0.004 [−0.057, +0.062] |
 
 `reports/rerank_gain_human.csv`: 18 queries, judge qrels restricted to the same 270 human-labelled pairs. All CIs include 0 on both sides, and judge and human deltas are within 0.013 of each other for every reranker, so the judge shows no systematic preference for reranked lists.
 
@@ -282,7 +282,7 @@ The demo is a local FastAPI app with a static frontend. Images are served from a
 ## Assumptions and limitations
 
 - **The judge is an LLM.** It agrees with the human labels above the gate (κ_w 0.76) but grades higher on average (+0.31 per pair), so absolute nDCG values are optimistic. Comparisons between systems graded by the same judge are more reliable than the absolute numbers. The judge is a different model from the reranker, and it shows no preference for reranked lists on the human-labelled pairs.
-- **One annotator.** The 300 human labels come from one person. Self-consistency was measured on 30 repeated pairs (exact 0.87, κ_w 0.93), but there is no second annotator.
+- **One annotator.** The 300 human labels (270 distinct pairs plus 30 repeats) come from one person. Self-consistency was measured on the 30 repeated pairs (exact 0.87, κ_w 0.93), but there is no second annotator.
 - **100 queries.** CIs are about ±0.017 wide around the headline, so steps of about 0.01 (BM25 in the fusion, the food prior) cannot be separated from noise after correction.
 - **Evaluation intents, not traffic.** The queries are a given set of intents, 54 of them translated from US concepts, not a sample of real search logs.
 - **Pool-based relevance.** Every top 10 of the 11 systems is judged (judged@10 = 1.0). A new system could surface unjudged items, which would count as not relevant until judged.
