@@ -1,20 +1,20 @@
 bm25:
   type: bm25
-  description: "S0: BM25 on V2 doc text, PT-stemmed and accent-folded"
+  description: "S0: BM25 on item doc text, PT-stemmed and accent-folded"
   params:
     k1: 1.5
     b: 0.75
 
 dense_oai_small:
   type: dense
-  description: "S1: dense text-embedding-3-small (1536d) on V2 doc text"
+  description: "S1: dense text-embedding-3-small (1536d) on item doc text"
   params:
     backend: openai
     model: text-embedding-3-small
 
 dense_oai_large:
   type: dense
-  description: "S2: dense text-embedding-3-large (3072d) on V2 doc text"
+  description: "S2: dense text-embedding-3-large (3072d) on item doc text"
   params:
     backend: openai
     model: text-embedding-3-large
