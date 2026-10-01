@@ -32,8 +32,8 @@ def food_prior(
 
     For food queries the score of every non-food item is multiplied by `lam` (0.5 in the configs),
     so a shampoo can still appear but sinks below comparable dishes. Nothing is ever filtered out,
-    and product searches (a cleaning product, a medicine) get no penalty at all. Items with an unknown
-    flag count as food.
+    and product searches (a cleaning product, a medicine) get no penalty at all. Items with an
+    unknown flag count as food.
     """
     if intent == "product":
         return list(hits), PriorTrace(False, lam, "product intent: no penalty")
