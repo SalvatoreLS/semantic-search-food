@@ -8,17 +8,19 @@
   <rect width="1500" height="560" fill="#FFFFFF"/>
   <rect x="20" y="23" width="14" height="14" rx="3" fill="#0332AF" stroke="#0332AF" stroke-width="1.5"/>
   <text x="42" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">headline system</text>
-  <rect x="200" y="23" width="14" height="14" rx="3" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
-  <text x="222" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">built and measured</text>
-  <rect x="420" y="23" width="14" height="14" rx="3" fill="#FFFFFF" stroke="#B42318" stroke-width="1.5"/>
-  <text x="442" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">hurts, dropped</text>
-  <rect x="590" y="23" width="14" height="14" rx="3" fill="#FFFFFF" stroke="#C9D0DC" stroke-width="1.5"/>
-  <text x="612" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">considered, not built</text>
+  <rect x="200" y="23" width="14" height="14" rx="3" fill="#E9EEFC" stroke="#0332AF" stroke-width="1.5"/>
+  <text x="222" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">compared against (S0, S9)</text>
+  <rect x="410" y="23" width="14" height="14" rx="3" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
+  <text x="432" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">built and measured</text>
+  <rect x="580" y="23" width="14" height="14" rx="3" fill="#FFFFFF" stroke="#B42318" stroke-width="1.5"/>
+  <text x="602" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">hurts, dropped</text>
+  <rect x="740" y="23" width="14" height="14" rx="3" fill="#FFFFFF" stroke="#C9D0DC" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <text x="762" y="34" text-anchor="start" font-size="13" font-weight="400" fill="#5B6475">considered, not built</text>
   <g>
-    <rect x="20" y="230" width="210" height="100" rx="10" fill="#FFFFFF" stroke="#0332AF" stroke-width="1.5"/>
-    <text x="125.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0B0F1A">S0 BM25</text>
-    <text x="125.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#5B6475">baseline</text>
-    <text x="125.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#5B6475">nDCG@5 0.576</text>
+    <rect x="20" y="230" width="210" height="100" rx="10" fill="#E9EEFC" stroke="#0332AF" stroke-width="1.5"/>
+    <text x="125.0" y="266.1" text-anchor="middle" font-size="17" font-weight="600" fill="#0332AF">S0 BM25</text>
+    <text x="125.0" y="289.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">baseline</text>
+    <text x="125.0" y="308.1" text-anchor="middle" font-size="13.5" fill="#0B0F1A">nDCG@5 0.576</text>
   </g>
   <g>
     <rect x="270" y="230" width="210" height="100" rx="10" fill="#F5F7FA" stroke="#C9D0DC" stroke-width="1.5"/>
