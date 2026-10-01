@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 from foodsearch import paths
 from foodsearch.systems import COMPARE_SYSTEM, HEADLINE_SYSTEM
 
-DEFAULT_QUERY = "Comida para piquenique no parque"
+DEFAULT_QUERY_ID = "q073"
 CHROME_NAMES = (
     "google-chrome",
     "google-chrome-stable",
@@ -31,7 +31,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Screenshot the demo views with headless Chrome and foodsearch serve."
     )
-    parser.add_argument("--query", default=DEFAULT_QUERY, help="eval query to show")
+    parser.add_argument(
+        "--query",
+        help=f"eval query to show (default: the text of {DEFAULT_QUERY_ID} in data/queries.csv)",
+    )
     parser.add_argument("--out", type=Path, help="output folder (default: artifacts/screenshots)")
     parser.add_argument("--chrome", help="Chrome or Chromium binary (default: first found on PATH)")
     parser.add_argument("--width", type=int, default=1440, help="window width in px")
@@ -103,8 +106,16 @@ def shoot(
         raise SystemExit(f"Chrome failed on {url}:\n{done.stderr.strip()}")
 
 
+def default_query() -> str:
+    from foodsearch.api.backend import load_demo_queries
+
+    queries = load_demo_queries()
+    return str(queries.loc[queries["query_id"] == DEFAULT_QUERY_ID, "text"].iloc[0])
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
+    query = args.query or default_query()
     chrome = find_chrome(args.chrome)
     out_dir = args.out or paths.artifacts_dir() / "screenshots"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -120,7 +131,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             wait_ready(base, server)
             with tempfile.TemporaryDirectory(prefix="foodsearch-chrome-") as profile:
-                for view, url in view_urls(base, args.query).items():
+                for view, url in view_urls(base, query).items():
                     target = out_dir / f"demo_{view}.png"
                     size = (args.width, VIEW_HEIGHTS[view])
                     shoot(chrome, url, target, size, args.budget_ms, Path(profile))
