@@ -6,6 +6,7 @@ import pytest
 from foodsearch.eval import plots
 from foodsearch.eval.plots import (
     delta_plot,
+    dodge,
     grade_mix,
     grade_mix_plot,
     pareto_plot,
@@ -15,6 +16,11 @@ from foodsearch.eval.plots import (
 
 def test_spread_keeps_a_minimum_gap() -> None:
     assert spread([0.5, 0.505, 0.9], gap=0.02) == pytest.approx([0.5, 0.52, 0.9])
+
+
+def test_dodge_moves_equal_costs_right_in_quality_order() -> None:
+    placed = dodge([0.0, 0.0, 0.5, 0.0], [0.8, 0.6, 0.9, 0.7], width=0.01)
+    assert placed == pytest.approx([0.02, 0.0, 0.5, 0.01])
 
 
 def test_grade_mix_counts_judged_top_items() -> None:

@@ -41,6 +41,21 @@ def spread(values: Sequence[float], gap: float) -> list[float]:
     return placed
 
 
+def dodge(x: Sequence[float], y: Sequence[float], width: float) -> list[float]:
+    order = sorted(range(len(x)), key=lambda i: (x[i], y[i]))
+    groups: list[list[int]] = []
+    for i in order:
+        if groups and x[i] - x[groups[-1][0]] < width:
+            groups[-1].append(i)
+        else:
+            groups.append([i])
+    placed = list(x)
+    for group in groups:
+        for j, i in enumerate(sorted(group, key=lambda i: y[i])):
+            placed[i] = x[group[0]] + j * width
+    return placed
+
+
 def pareto_plot(
     summary: pd.DataFrame,
     costs: pd.DataFrame,
@@ -56,30 +71,36 @@ def pareto_plot(
     x, y = data["usd_per_100_queries"].tolist(), data["mean"].tolist()
     best = max(range(len(y)), key=lambda i: y[i])
     names = [(labels or {}).get(s, s) for s in data["system"]]
+    span = max(x) or 1.0
+    width = 0.008 * span
+    placed = dodge(x, y, width)
+    label_x = [
+        max(placed[j] for j in range(len(x)) if abs(x[j] - x[i]) < 2 * width) + 0.02 * span
+        for i in range(len(x))
+    ]
     fig = Figure(figsize=(8, 5), dpi=200, facecolor=SURFACE)
     ax = fig.subplots()
     _style(ax)
     for i, row in data.iterrows():
         ax.errorbar(
-            row["usd_per_100_queries"],
+            placed[i],
             row["mean"],
             yerr=[[row["mean"] - row["lo"]], [row["hi"] - row["mean"]]],
             fmt="o",
             color=ACCENT if i == best else OTHER,
             markersize=9 if i == best else 6,
             elinewidth=1,
-            capsize=0,
+            capsize=3,
             markeredgecolor=SURFACE,
             markeredgewidth=1.5,
             zorder=4 if i == best else 3,
         )
-    span = max(x) or 1.0
     label_y = spread(y, gap=0.018)
     for i, name in enumerate(names):
         ax.annotate(
             name,
-            (x[i], y[i]),
-            xytext=(x[i] + 0.02 * span, label_y[i]),
+            (placed[i], y[i]),
+            xytext=(label_x[i], label_y[i]),
             textcoords="data",
             va="center",
             fontsize=9.5 if i == best else 8.5,
@@ -90,6 +111,17 @@ def pareto_plot(
     ax.set_xlabel("LLM cost, $ per 100 queries (cold cache)", color=MUTED, fontsize=9)
     ax.set_ylabel("nDCG@5 (95% CI)", color=MUTED, fontsize=9)
     ax.set_title("Quality vs cost", loc="left", color=TEXT, fontsize=12, fontweight="semibold")
+    if placed != x:
+        ax.text(
+            1.0,
+            1.02,
+            "points with the same cost are nudged right to keep their CIs apart",
+            transform=ax.transAxes,
+            ha="right",
+            va="bottom",
+            color=MUTED,
+            fontsize=7.5,
+        )
     fig.tight_layout()
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, facecolor=SURFACE)
