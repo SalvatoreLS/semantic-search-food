@@ -38,7 +38,7 @@ function applyTheme(theme) {
 
 function parseHash() {
   const [name, query = ""] = location.hash.replace("#", "").split("?");
-  return { name: name in VIEWS ? name : "search", params: new URLSearchParams(query) };
+  return { name: Object.hasOwn(VIEWS, name) ? name : "search", params: new URLSearchParams(query) };
 }
 
 function currentView() {
