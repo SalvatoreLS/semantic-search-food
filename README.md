@@ -59,7 +59,7 @@ src/foodsearch/
   images.py                 item id to local image file, via the image manifest
   api/                      FastAPI demo backend: JSON API, local images, static frontend
   web/static/               demo frontend (no build step)
-assets/                     diagrams (SVG), plots and demo screenshots
+assets/                     diagrams (SVG), plots, demo screenshots, and figures for the deck and report
 results/final_top10.csv     required output: top 10 per query of the headline system (hybrid)
 reports/                    metric tables, ablations, cost/latency, failures
 scripts/build_artifacts.py  one command from data/ to every artifact
@@ -67,6 +67,9 @@ scripts/fetch_images.py     local image cache for the demo
 scripts/screenshots.py      demo screenshots with headless Chrome
 notebooks/                  data exploration notebook
 tests/                      unit tests (no network)
+pyproject.toml              package, dependencies and the `foodsearch` entry point; ruff and pytest settings
+requirements.lock.txt       exact versions tested on Linux, Python 3.11
+.github/workflows/ci.yml    CI: ruff and pytest on every push and pull request
 ```
 
 `results/final_top10.csv` has the columns `query_id, rank, itemId, score, system`. For `hybrid` the `score` comes from the rank after the listwise rerank, (n − i) / n over the n fused candidates of a query. It orders items within a query, but it is not a calibrated relevance score and should not be compared across queries.
